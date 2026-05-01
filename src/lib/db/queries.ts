@@ -59,7 +59,13 @@ export async function getResumoDoDia(data: string) {
   const receitaGerada = rows
     .filter((r) => r.status === 'compareceu')
     .reduce((acc, r) => acc + Number(r.valorTotal ?? 0), 0)
-  return { total, compareceu, naoCompareceu, pendente, pessoasEsperadas, receitaGerada }
+  const receitaPerdida = rows
+    .filter((r) => r.status === 'nao_compareceu')
+    .reduce((acc, r) => acc + Number(r.valorTotal ?? 0), 0)
+  const receitaPotencial = rows
+    .filter((r) => r.status === 'pendente')
+    .reduce((acc, r) => acc + Number(r.valorTotal ?? 0), 0)
+  return { total, compareceu, naoCompareceu, pendente, pessoasEsperadas, receitaGerada, receitaPerdida, receitaPotencial }
 }
 
 export async function getRelatorioMensal(ano: number, mes: number) {
