@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Plus, CheckCircle, XCircle, Clock, Users } from 'lucide-react'
+import { Plus, CheckCircle, XCircle, Clock, Users, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { CardReserva } from './CardReserva'
 import { ModalConfirmarChegada } from './ModalConfirmarChegada'
 import { ModalEntradaPorta } from './ModalEntradaPorta'
@@ -17,6 +18,8 @@ interface Props {
   capacidadeEfetiva: number
   alertaPct: number
   dataFormatada: string
+  dataSelecionada: string
+  isHoje: boolean
 }
 
 const FILTROS: { valor: FiltroStatus; label: string; icone: React.ElementType; cor: string }[] = [
@@ -26,13 +29,22 @@ const FILTROS: { valor: FiltroStatus; label: string; icone: React.ElementType; c
   { valor: 'nao_compareceu', label: 'Não veio', icone: XCircle, cor: 'bg-red-50 text-red-600 border-red-200' },
 ]
 
+function somarDias(data: string, dias: number): string {
+  const d = new Date(data + 'T12:00:00')
+  d.setDate(d.getDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+
 export function PainelPorta({
   reservas,
   capacidadeOcupada,
   capacidadeEfetiva,
   alertaPct,
   dataFormatada,
+  dataSelecionada,
+  isHoje,
 }: Props) {
+  const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
   const [reservaConfirmando, setReservaConfirmando] = useState<Reserva | null>(null)
   const [modalPortaAberto, setModalPortaAberto] = useState(false)
@@ -46,23 +58,51 @@ export function PainelPorta({
     nao_compareceu: reservas.filter((r) => r.status === 'nao_compareceu').length,
   }
 
-  const pessoasConfirmadas = reservas
-    .filter((r) => r.status === 'compareceu')
-    .reduce((s, r) => s + (r.pessoasChegada ?? r.adultos + r.criancas50pct + r.criancasIsento), 0)
+  function navData(dias: number) {
+    const nova = somarDias(dataSelecionada, dias)
+    router.push(`/porta?data=${nova}`)
+  }
+
+  function irParaHoje() {
+    router.push('/porta')
+  }
 
   return (
     <div className="flex flex-col h-full gap-3">
-      {/* Cabeçalho */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-black text-gray-900 leading-tight">Reservas do Dia</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{dataFormatada}</p>
+      {/* Cabeçalho com navegação de data */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <button
+            onClick={() => navData(-1)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="flex-1 min-w-0 text-center">
+            <p className="text-base font-black text-gray-900 leading-tight truncate">{dataFormatada}</p>
+            {!isHoje && (
+              <button
+                onClick={irParaHoje}
+                className="text-xs text-emerald-600 font-semibold hover:underline cursor-pointer flex items-center gap-1 mx-auto"
+              >
+                <CalendarDays className="w-3 h-3" />
+                Ir para hoje
+              </button>
+            )}
+            {isHoje && <p className="text-xs text-emerald-600 font-semibold">Hoje</p>}
+          </div>
+          <button
+            onClick={() => navData(1)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer shrink-0"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
         <Button
           onClick={() => setModalPortaAberto(true)}
-          className="bg-orange-500 hover:bg-orange-600 h-14 px-5 text-base font-bold rounded-2xl shadow-lg shadow-orange-200 gap-2 shrink-0"
+          className="bg-orange-500 hover:bg-orange-600 h-12 px-4 text-sm font-bold rounded-2xl shadow-lg shadow-orange-200 gap-1.5 shrink-0"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
           Entrada
         </Button>
       </div>
@@ -113,19 +153,24 @@ export function PainelPorta({
         })}
       </div>
 
-      {/* Lista de reservas */}
+      {/* Lista */}
       <div className="flex-1 overflow-y-auto space-y-2.5 pb-4">
         {reservasFiltradas.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-gray-300">
             <Users className="w-12 h-12 mb-3" />
             <p className="font-semibold text-gray-400">Nenhuma reserva</p>
             <p className="text-sm text-gray-300 mt-0.5">
-              {filtro === 'todos' ? 'Nenhuma reserva para hoje' : `Nenhuma com este status`}
+              {filtro === 'todos' ? 'Nenhuma reserva nesta data' : 'Nenhuma com este status'}
             </p>
           </div>
         ) : (
           reservasFiltradas.map((r) => (
-            <CardReserva key={r.id} reserva={r} onConfirmar={setReservaConfirmando} />
+            <CardReserva
+              key={r.id}
+              reserva={r}
+              onConfirmar={setReservaConfirmando}
+              dataSelecionada={dataSelecionada}
+            />
           ))
         )}
       </div>
