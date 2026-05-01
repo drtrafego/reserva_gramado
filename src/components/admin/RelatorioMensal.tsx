@@ -254,8 +254,8 @@ export function RelatorioMensal({ relatorio, mes, ano }: Props) {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(v: number, _: string, props) => [
-                        `${v} reservas • ${fmt(props.payload?.receita ?? 0)}`,
+                      formatter={(v, _name, props) => [
+                        `${Number(v ?? 0)} reservas • ${fmt(Number(props.payload?.receita ?? 0))}`,
                         'Canal',
                       ]}
                       contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
