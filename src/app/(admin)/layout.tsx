@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { UtensilsCrossed } from 'lucide-react'
 import { BotaoLogout } from '@/components/admin/BotaoLogout'
@@ -21,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               Painel da Porta
             </Link>
-            <BotaoLogout />
+            <Suspense><BotaoLogout /></Suspense>
           </div>
         </div>
       </header>
