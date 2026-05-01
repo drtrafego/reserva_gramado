@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { FormNovaReserva } from '@/components/admin/FormNovaReserva'
 
 export default function NovaReservaPage() {

@@ -13,28 +13,16 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const children_ = (
-    <>
-      {children}
-      <Toaster richColors position="top-center" />
-    </>
-  )
-
-  if (!stackServerApp) {
-    return (
-      <html lang="pt-BR" className={`${geist.variable} h-full antialiased`}>
-        <body className="min-h-full flex flex-col">{children_}</body>
-      </html>
-    )
-  }
-
   return (
     <html lang="pt-BR" className={`${geist.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <StackProvider app={stackServerApp as any}>
-          <StackTheme>{children_}</StackTheme>
+          <StackTheme>
+            {children}
+          </StackTheme>
         </StackProvider>
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   )

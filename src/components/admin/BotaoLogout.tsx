@@ -1,22 +1,10 @@
 'use client'
 
+import { useUser } from '@stackframe/stack'
 import { LogOut } from 'lucide-react'
 
 export function BotaoLogout() {
-  const hasAuth = !!(
-    process.env.NEXT_PUBLIC_STACK_PROJECT_ID &&
-    process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
-  )
-
-  if (!hasAuth) return null
-
-  return <BotaoLogoutAuth />
-}
-
-function BotaoLogoutAuth() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useUser } = require('@stackframe/stack')
-  const user = useUser()
+  const user = useUser({ or: 'return-null' })
 
   if (!user) return null
 
