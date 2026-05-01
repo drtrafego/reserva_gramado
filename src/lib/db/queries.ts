@@ -1,6 +1,6 @@
 import { eq, and, sql, gte, lte, desc } from 'drizzle-orm'
 import { db } from './index'
-import { reservas, restauranteConfig } from './schema'
+import { reservas, restauranteConfig, ambientes } from './schema'
 import type { StatusReserva } from './schema'
 
 export async function getReservasDoDia(data: string) {
@@ -68,6 +68,10 @@ export async function getResumoDoDia(data: string) {
   return { total, compareceu, naoCompareceu, pendente, pessoasEsperadas, receitaGerada, receitaPerdida, receitaPotencial }
 }
 
+export async function getAmbientes() {
+  return db.select().from(ambientes).orderBy(ambientes.nome)
+}
+
 export async function getRelatorioMensal(ano: number, mes: number) {
   const inicio = `${ano}-${String(mes).padStart(2, '0')}-01`
   const fim = `${ano}-${String(mes).padStart(2, '0')}-31`
@@ -110,15 +114,30 @@ export async function getRelatorioMensal(ano: number, mes: number) {
 
   const horariosPico: Record<string, number> = {}
   rows.forEach((r) => {
-    if (r.horarioReservado) {
-      const hora = r.horarioReservado.substring(0, 5)
-      horariosPico[hora] = (horariosPico[hora] ?? 0) + 1
-    }
+    const hora = r.horarioReservado ? r.horarioReservado.substring(0, 5) : r.horarioChegada ? r.horarioChegada.substring(0, 5) : null
+    if (hora) horariosPico[hora] = (horariosPico[hora] ?? 0) + 1
   })
   const horariosPicoOrdenados = Object.entries(horariosPico)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([hora, qtd]) => ({ hora, qtd }))
+
+  function topicoHorariosPorCanal(canal: 'reserva' | 'porta' | 'site') {
+    const mapa: Record<string, number> = {}
+    rows
+      .filter((r) => r.canalOrigem === canal)
+      .forEach((r) => {
+        const hora = r.horarioReservado ? r.horarioReservado.substring(0, 5) : r.horarioChegada ? r.horarioChegada.substring(0, 5) : null
+        if (hora) mapa[hora] = (mapa[hora] ?? 0) + 1
+      })
+    return Object.entries(mapa).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([hora, qtd]) => ({ hora, qtd }))
+  }
+
+  const horariosPicoPorCanal = {
+    reserva: topicoHorariosPorCanal('reserva'),
+    porta: topicoHorariosPorCanal('porta'),
+    site: topicoHorariosPorCanal('site'),
+  }
 
   const porDia: Record<string, { compareceu: number; nao_compareceu: number; receita: number }> = {}
   rows.forEach((r) => {
@@ -143,6 +162,7 @@ export async function getRelatorioMensal(ano: number, mes: number) {
     porCanal,
     receitaPorCanal,
     horariosPico: horariosPicoOrdenados,
+    horariosPicoPorCanal,
     graficosDia,
     rows,
   }

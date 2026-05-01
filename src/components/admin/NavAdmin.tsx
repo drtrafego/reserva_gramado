@@ -3,13 +3,15 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, CalendarDays, PlusCircle, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, PlusCircle, BarChart3, LayoutGrid, Settings } from 'lucide-react'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/reservas', label: 'Reservas', icon: CalendarDays },
   { href: '/admin/reservas/nova', label: 'Nova Reserva', icon: PlusCircle },
   { href: '/admin/relatorios', label: 'Relatórios', icon: BarChart3 },
+  { href: '/admin/ambientes', label: 'Ambientes', icon: LayoutGrid },
+  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
 ]
 
 function isActive(href: string, pathname: string) {

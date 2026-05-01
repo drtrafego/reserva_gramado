@@ -20,8 +20,10 @@ const MESES = [
 const CORES_CANAL = ['#059669', '#f97316', '#7c3aed']
 const ANOS = [2024, 2025, 2026]
 
+type Relatorio = Awaited<ReturnType<typeof import('@/lib/db/queries').getRelatorioMensal>>
+
 interface Props {
-  relatorio: Awaited<ReturnType<typeof import('@/lib/db/queries').getRelatorioMensal>>
+  relatorio: Relatorio
   mes: number
   ano: number
 }
@@ -280,15 +282,15 @@ export function RelatorioMensal({ relatorio, mes, ano }: Props) {
 
           {relatorio.horariosPico.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-1">Horários de pico</h3>
-              <p className="text-xs text-gray-400 mb-4">Top 8 horários mais reservados no mês</p>
+              <h3 className="font-semibold text-gray-900 mb-1">Horários de pico geral</h3>
+              <p className="text-xs text-gray-400 mb-4">Top 8 horários mais movimentados no mês (todos os canais)</p>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={relatorio.horariosPico} layout="vertical" barSize={18}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis dataKey="hora" type="category" tick={{ fontSize: 11 }} width={45} />
                   <Tooltip
-                    formatter={(v) => [v, 'Reservas']}
+                    formatter={(v) => [v, 'Atendimentos']}
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
                   />
                   <Bar dataKey="qtd" fill="#059669" radius={[0, 4, 4, 0]} />
@@ -296,6 +298,37 @@ export function RelatorioMensal({ relatorio, mes, ano }: Props) {
               </ResponsiveContainer>
             </div>
           )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(
+              [
+                { canal: 'reserva' as const, label: 'WhatsApp / Reserva', cor: '#059669' },
+                { canal: 'porta' as const, label: 'Porta (Walk-in)', cor: '#f97316' },
+                { canal: 'site' as const, label: 'Site', cor: '#7c3aed' },
+              ] as const
+            ).map(({ canal, label, cor }) => {
+              const dados = relatorio.horariosPicoPorCanal[canal]
+              if (dados.length === 0) return null
+              return (
+                <div key={canal} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                  <h3 className="font-semibold text-gray-900 mb-0.5">{label}</h3>
+                  <p className="text-xs text-gray-400 mb-4">Horários de pico</p>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <BarChart data={dados} layout="vertical" barSize={16}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 10 }} />
+                      <YAxis dataKey="hora" type="category" tick={{ fontSize: 10 }} width={42} />
+                      <Tooltip
+                        formatter={(v) => [v, 'Atendimentos']}
+                        contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                      />
+                      <Bar dataKey="qtd" fill={cor} radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )
+            })}
+          </div>
         </>
       )}
     </div>
