@@ -134,7 +134,7 @@ export function PainelPorta({
       <div className="flex gap-2 overflow-x-auto pb-0.5">
         {FILTROS.map((f) => {
           const ativo = filtro === f.valor
-          const qtd = totais[f.valor]
+          const qtd = totais[f.valor as keyof typeof totais] ?? 0
           return (
             <button
               key={f.valor}
