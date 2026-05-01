@@ -16,6 +16,6 @@ function getInstance(): Db {
 
 export const db: Db = new Proxy({} as Db, {
   get(_, prop) {
-    return (getInstance() as Record<string | symbol, unknown>)[prop]
+    return (getInstance() as unknown as Record<string | symbol, unknown>)[prop]
   },
 })
