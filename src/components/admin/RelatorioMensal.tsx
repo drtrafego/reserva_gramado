@@ -181,8 +181,8 @@ export function RelatorioMensal({ relatorio, mes, ano }: Props) {
                   <XAxis dataKey="data" tick={{ fontSize: 11 }} />
                   <YAxis tickFormatter={fmtK} tick={{ fontSize: 10 }} width={56} />
                   <Tooltip
-                    formatter={(value: number, name: string) => [
-                      fmt(value),
+                    formatter={(value, name) => [
+                      fmt(Number(value ?? 0)),
                       name === 'receita' ? 'Receita do dia' : 'Acumulado',
                     ]}
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
