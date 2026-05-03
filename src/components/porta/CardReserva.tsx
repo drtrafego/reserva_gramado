@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, Clock, Users, DollarSign, MessageCircle } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Users, DollarSign, MessageCircle, Pencil } from 'lucide-react'
 import { BadgeCanal } from './BadgeCanal'
 import { marcarNaoCompareceu } from '@/lib/actions/reservas'
 import { toast } from 'sonner'
@@ -11,6 +11,7 @@ import type { Reserva } from '@/lib/db/schema'
 interface Props {
   reserva: Reserva
   onConfirmar: (reserva: Reserva) => void
+  onEditar: (reserva: Reserva) => void
   dataSelecionada?: string
 }
 
@@ -50,7 +51,7 @@ function gerarMsgWhatsApp(reserva: Reserva, data: string): string {
   return encodeURIComponent(linhas)
 }
 
-export function CardReserva({ reserva, onConfirmar, dataSelecionada }: Props) {
+export function CardReserva({ reserva, onConfirmar, onEditar, dataSelecionada }: Props) {
   const [pending, startTransition] = useTransition()
   const isPendente = reserva.status === 'pendente'
   const chegou = reserva.status === 'compareceu'
@@ -125,8 +126,14 @@ export function CardReserva({ reserva, onConfirmar, dataSelecionada }: Props) {
               <p className="text-xs text-gray-400 mt-1">{reserva.telefone}</p>
             )}
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 flex items-start gap-2">
             <BadgeCanal canal={reserva.canalOrigem} />
+            <button
+              onClick={() => onEditar(reserva)}
+              className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 

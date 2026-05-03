@@ -9,8 +9,10 @@ import {
 import { CardResumo } from './CardResumo'
 import {
   CheckCircle, XCircle, Users, Calendar,
-  TrendingUp, TrendingDown, Target,
+  TrendingUp, TrendingDown, Target, Download,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import type { Reserva } from '@/lib/db/schema'
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -35,6 +37,28 @@ function fmt(v: number) {
 function fmtK(v: number) {
   if (v >= 1000) return `R$ ${(v / 1000).toFixed(1)}k`
   return `R$ ${v.toFixed(0)}`
+}
+
+function exportarCSV(rows: Reserva[], mes: number, ano: number) {
+  const cabecalho = ['Data', 'Nome', 'Telefone', 'Horário Reservado', 'Horário Chegada', 'Adultos', 'Crianças 50%', 'Crianças Isento', 'Pessoas na Chegada', 'Valor por Pessoa', 'Valor Total', 'Canal', 'Status', 'Observações']
+  const linhas = rows.map((r) =>
+    [
+      r.data, r.nomeCliente ?? '', r.telefone ?? '',
+      r.horarioReservado ?? '', r.horarioChegada ?? '',
+      r.adultos, r.criancas50pct, r.criancasIsento,
+      r.pessoasChegada ?? '',
+      r.valorPorPessoa ?? '', r.valorTotal ?? '',
+      r.canalOrigem, r.status, r.observacoes ?? '',
+    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';')
+  )
+  const csv = [cabecalho.join(';'), ...linhas].join('\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `reservas-${ano}-${String(mes).padStart(2, '0')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export function RelatorioMensal({ relatorio, mes, ano }: Props) {
@@ -71,6 +95,17 @@ export function RelatorioMensal({ relatorio, mes, ano }: Props) {
           <p className="text-sm text-gray-500">{MESES[mes - 1]} de {ano}</p>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
+          {relatorio.rows.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+              onClick={() => exportarCSV(relatorio.rows, mes, ano)}
+            >
+              <Download className="w-4 h-4" />
+              Exportar CSV
+            </Button>
+          )}
           <select
             value={mes}
             onChange={(e) => navegar(Number(e.target.value), ano)}

@@ -1,13 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Plus, CheckCircle, XCircle, Clock, Users, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { CardReserva } from './CardReserva'
 import { ModalConfirmarChegada } from './ModalConfirmarChegada'
+import { ModalEditarReserva } from './ModalEditarReserva'
 import { ModalEntradaPorta } from './ModalEntradaPorta'
 import { IndicadorCapacidade } from './IndicadorCapacidade'
+import { marcarNaoCompareceuEmLote } from '@/lib/actions/reservas'
+import { toast } from 'sonner'
 import type { Reserva, StatusReserva } from '@/lib/db/schema'
 
 type FiltroStatus = 'todos' | StatusReserva
@@ -47,7 +50,18 @@ export function PainelPorta({
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
   const [reservaConfirmando, setReservaConfirmando] = useState<Reserva | null>(null)
+  const [reservaEditando, setReservaEditando] = useState<Reserva | null>(null)
   const [modalPortaAberto, setModalPortaAberto] = useState(false)
+  const [pendingLote, startLote] = useTransition()
+
+  const pendentes = reservas.filter((r) => r.status === 'pendente')
+
+  function handleNoShowLote() {
+    startLote(async () => {
+      await marcarNaoCompareceuEmLote(pendentes.map((r) => r.id))
+      toast.success(`${pendentes.length} reserva(s) marcadas como não compareceu`)
+    })
+  }
 
   const reservasFiltradas = filtro === 'todos' ? reservas : reservas.filter((r) => r.status === filtro)
 
@@ -130,6 +144,20 @@ export function PainelPorta({
         </div>
       </div>
 
+      {/* Fechar dia */}
+      {pendentes.length > 0 && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full border-red-200 text-red-600 hover:bg-red-50 font-semibold"
+          onClick={handleNoShowLote}
+          disabled={pendingLote}
+        >
+          <XCircle className="w-4 h-4 mr-2" />
+          Fechar dia: marcar {pendentes.length} pendente(s) como não vieram
+        </Button>
+      )}
+
       {/* Filtros */}
       <div className="flex gap-2 overflow-x-auto pb-0.5">
         {FILTROS.map((f) => {
@@ -169,6 +197,7 @@ export function PainelPorta({
               key={r.id}
               reserva={r}
               onConfirmar={setReservaConfirmando}
+              onEditar={setReservaEditando}
               dataSelecionada={dataSelecionada}
             />
           ))
@@ -179,6 +208,11 @@ export function PainelPorta({
         reserva={reservaConfirmando}
         open={!!reservaConfirmando}
         onClose={() => setReservaConfirmando(null)}
+      />
+      <ModalEditarReserva
+        reserva={reservaEditando}
+        open={!!reservaEditando}
+        onClose={() => setReservaEditando(null)}
       />
       <ModalEntradaPorta open={modalPortaAberto} onClose={() => setModalPortaAberto(false)} />
     </div>

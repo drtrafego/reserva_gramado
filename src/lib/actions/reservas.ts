@@ -8,6 +8,7 @@ import {
   confirmarChegadaSchema,
   entradaPortaSchema,
   novaReservaSchema,
+  editarReservaSchema,
 } from '@/lib/validations/reserva'
 import { format } from 'date-fns'
 
@@ -112,6 +113,48 @@ export async function criarReserva(formData: FormData) {
     status: 'pendente',
     observacoes: parsed.data.observacoes ?? null,
   })
+
+  revalidatePath('/porta')
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+export async function editarReserva(formData: FormData) {
+  const raw = {
+    id: formData.get('id'),
+    nomeCliente: formData.get('nomeCliente'),
+    telefone: formData.get('telefone') || undefined,
+    horarioReservado: formData.get('horarioReservado') || undefined,
+    adultos: formData.get('adultos'),
+    criancas50pct: formData.get('criancas50pct') ?? '0',
+    criancasIsento: formData.get('criancasIsento') ?? '0',
+    valorPorPessoa: formData.get('valorPorPessoa') || undefined,
+    observacoes: formData.get('observacoes') || undefined,
+  }
+
+  const parsed = editarReservaSchema.safeParse(raw)
+  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
+
+  const { adultos, criancas50pct, criancasIsento, valorPorPessoa } = parsed.data
+  const valorTotal = valorPorPessoa
+    ? calcularTotal(adultos, criancas50pct, valorPorPessoa)
+    : null
+
+  await db
+    .update(reservas)
+    .set({
+      nomeCliente: parsed.data.nomeCliente,
+      telefone: parsed.data.telefone ?? null,
+      horarioReservado: parsed.data.horarioReservado ?? null,
+      adultos,
+      criancas50pct,
+      criancasIsento,
+      valorPorPessoa: valorPorPessoa ? String(valorPorPessoa) : null,
+      valorTotal: valorTotal ? String(valorTotal) : null,
+      observacoes: parsed.data.observacoes ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(reservas.id, parsed.data.id))
 
   revalidatePath('/porta')
   revalidatePath('/admin')
