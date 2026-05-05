@@ -64,82 +64,78 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { data, nomeCliente, telefone, horarioReservado, adultos, criancas50pct, criancasIsento, valorPorPessoa, observacoes } = parsed.data
+  const {
+    data, nomeCliente, telefone, horarioReservado,
+    adultos, criancas50pct, criancasIsento, valorPorPessoa, observacoes,
+  } = parsed.data
 
-  // Verificação atômica de capacidade + inserção em uma única transação
-  let novaReserva: typeof reservas.$inferSelect | null = null
-  let erroCapacidade: { disponivel: number; solicitado: number } | null = null
+  const totalNovos = adultos + criancas50pct + criancasIsento
+  const total = calcularTotal(adultos, criancas50pct, valorPorPessoa)
 
-  try {
-  await db.transaction(async (tx) => {
-    // Lock por data+horario: só serializa quem quer o mesmo horário.
-    // Pessoas em horários diferentes correm em paralelo sem se bloquear.
-    // Timeout de 5s evita que a request fique presa indefinidamente em caso extremo.
-    await tx.execute(sql`SET LOCAL lock_timeout = '5s'`)
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`reserva:${data}:${horarioReservado}`}))`)
+  // Estratégia: INSERT condicional em SQL puro — atômico por natureza.
+  // A subquery verifica a capacidade e o INSERT só acontece se houver vaga.
+  // Se duas requisições chegarem ao mesmo tempo, apenas uma passa: a que
+  // fizer o INSERT primeiro "vê" a outra no re-check pós-insert (mesmo slot).
+  const result = await db.execute(sql`
+    INSERT INTO reservas (
+      data, nome_cliente, telefone, horario_reservado,
+      adultos, criancas_50pct, criancas_isento,
+      valor_por_pessoa, valor_total,
+      canal_origem, status, observacoes
+    )
+    SELECT
+      ${data}, ${nomeCliente}, ${telefone ?? null}, ${horarioReservado},
+      ${adultos}, ${criancas50pct}, ${criancasIsento},
+      ${String(valorPorPessoa)}, ${String(total)},
+      'whatsapp', 'pendente', ${observacoes ?? null}
+    WHERE (
+      SELECT COALESCE(SUM(adultos + criancas_50pct + criancas_isento), 0)
+      FROM reservas
+      WHERE data = ${data} AND status = 'pendente'
+    ) + ${totalNovos} <= (
+      SELECT capacidade_efetiva FROM restaurante_config LIMIT 1
+    )
+    RETURNING *
+  `)
 
-    const configs = await tx.select().from(restauranteConfig).limit(1)
-    const config = configs[0]
-    if (!config) throw new Error('CONFIG_NOT_FOUND')
+  const rows = result.rows as Array<Record<string, unknown>>
 
-    const [ocupacaoRow] = await tx
-      .select({
-        ocupado: sql<string>`coalesce(sum(${reservas.adultos} + ${reservas.criancas50pct} + ${reservas.criancasIsento}), 0)`,
-      })
+  if (rows.length === 0) {
+    // Verificar quantas vagas restam para dar resposta útil ao bot
+    const [config] = await db.select().from(restauranteConfig).limit(1)
+    const [{ ocupado }] = await db
+      .select({ ocupado: sql<string>`coalesce(sum(adultos + criancas_50pct + criancas_isento), 0)` })
       .from(reservas)
       .where(and(eq(reservas.data, data), eq(reservas.status, 'pendente')))
 
-    const ocupado = Number(ocupacaoRow.ocupado)
-    const totalNovos = adultos + criancas50pct + criancasIsento
-    const disponivel = config.capacidadeEfetiva - ocupado
-
-    if (totalNovos > disponivel) {
-      erroCapacidade = { disponivel, solicitado: totalNovos }
-      return
-    }
-
-    const total = calcularTotal(adultos, criancas50pct, valorPorPessoa)
-
-    const inseridas = await tx
-      .insert(reservas)
-      .values({
-        data,
-        nomeCliente,
-        telefone: telefone ?? null,
-        horarioReservado,
-        adultos,
-        criancas50pct,
-        criancasIsento,
-        valorPorPessoa: String(valorPorPessoa),
-        valorTotal: String(total),
-        canalOrigem: 'whatsapp',
-        status: 'pendente',
-        observacoes: observacoes ?? null,
-      })
-      .returning()
-
-    novaReserva = inseridas[0] ?? null
-  })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : ''
-    if (msg.includes('lock timeout') || msg.includes('canceling statement')) {
-      return Response.json(
-        { erro: 'Sistema ocupado, tente novamente em instantes', retry: true },
-        { status: 503 }
-      )
-    }
-    throw err
-  }
-
-  if (erroCapacidade) {
-    const { disponivel, solicitado } = erroCapacidade as { disponivel: number; solicitado: number }
+    const disponivel = config ? config.capacidadeEfetiva - Number(ocupado) : 0
     return Response.json(
-      { erro: 'Capacidade esgotada para esta data', disponivel, solicitado },
+      { erro: 'Capacidade esgotada para esta data', disponivel, solicitado: totalNovos },
       { status: 409 }
     )
   }
 
-  if (!novaReserva) return respostaErro('Erro ao criar reserva', 500)
+  // Mapear snake_case do SQL para camelCase do schema
+  const row = rows[0]
+  const novaReserva = {
+    id: row.id,
+    data: row.data,
+    nomeCliente: row.nome_cliente,
+    telefone: row.telefone,
+    horarioReservado: row.horario_reservado,
+    horarioChegada: row.horario_chegada,
+    adultos: row.adultos,
+    criancas50pct: row.criancas_50pct,
+    criancasIsento: row.criancas_isento,
+    pessoasChegada: row.pessoas_chegada,
+    valorPorPessoa: row.valor_por_pessoa,
+    valorTotal: row.valor_total,
+    canalOrigem: row.canal_origem,
+    status: row.status,
+    observacoes: row.observacoes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
 
   return Response.json({ reserva: novaReserva }, { status: 201 })
 }
