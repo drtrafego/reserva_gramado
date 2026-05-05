@@ -74,9 +74,10 @@ export function RelatorioMensal({ relatorio, mes, ano }: Props) {
       : 0
 
   const dadosCanal = [
-    { name: 'WhatsApp', value: relatorio.porCanal.reserva, receita: relatorio.receitaPorCanal.reserva },
+    { name: 'Reserva', value: relatorio.porCanal.reserva, receita: relatorio.receitaPorCanal.reserva },
     { name: 'Porta', value: relatorio.porCanal.porta, receita: relatorio.receitaPorCanal.porta },
     { name: 'Site', value: relatorio.porCanal.site, receita: relatorio.receitaPorCanal.site },
+    { name: 'WhatsApp', value: relatorio.porCanal.whatsapp, receita: relatorio.receitaPorCanal.whatsapp },
   ].filter((d) => d.value > 0)
 
   const dadosReceita = relatorio.graficosDia.reduce<Array<{ data: string; receita: number; acumulado: number }>>(

@@ -5,6 +5,7 @@ const config: Record<CanalOrigem, { label: string; className: string }> = {
   reserva: { label: 'Reserva', className: 'bg-blue-100 text-blue-800 border-blue-200' },
   porta: { label: 'Porta', className: 'bg-orange-100 text-orange-800 border-orange-200' },
   site: { label: 'Site', className: 'bg-purple-100 text-purple-800 border-purple-200' },
+  whatsapp: { label: 'WhatsApp', className: 'bg-green-100 text-green-800 border-green-200' },
 }
 
 export function BadgeCanal({ canal }: { canal: CanalOrigem }) {
