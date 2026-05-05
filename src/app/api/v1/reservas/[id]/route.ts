@@ -47,8 +47,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const reservaAtual = await buscarReserva(id)
   if (!reservaAtual) return respostaErro('Reserva não encontrada', 404)
 
-  if (reservaAtual.status === 'compareceu' || reservaAtual.status === 'nao_compareceu') {
-    return respostaErro('Reserva finalizada não pode ser alterada', 422)
+  if (reservaAtual.status !== 'pendente') {
+    return respostaErro('Apenas reservas pendentes podem ser alteradas', 422)
   }
 
   let body: unknown
@@ -102,8 +102,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const reservaAtual = await buscarReserva(id)
   if (!reservaAtual) return respostaErro('Reserva não encontrada', 404)
 
-  if (reservaAtual.status === 'compareceu' || reservaAtual.status === 'nao_compareceu') {
-    return respostaErro('Reserva finalizada não pode ser cancelada', 422)
+  if (reservaAtual.status !== 'pendente') {
+    return respostaErro('Apenas reservas pendentes podem ser canceladas', 422)
   }
 
   await db
