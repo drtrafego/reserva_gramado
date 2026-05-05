@@ -13,7 +13,7 @@ import {
   index,
 } from 'drizzle-orm/pg-core'
 
-export const canalOrigemEnum = pgEnum('canal_origem', ['reserva', 'porta', 'site'])
+export const canalOrigemEnum = pgEnum('canal_origem', ['reserva', 'porta', 'site', 'whatsapp'])
 export const statusReservaEnum = pgEnum('status_reserva', [
   'pendente',
   'compareceu',

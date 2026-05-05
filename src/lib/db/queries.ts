@@ -98,6 +98,7 @@ export async function getRelatorioMensal(ano: number, mes: number) {
     reserva: rows.filter((r) => r.canalOrigem === 'reserva').length,
     porta: rows.filter((r) => r.canalOrigem === 'porta').length,
     site: rows.filter((r) => r.canalOrigem === 'site').length,
+    whatsapp: rows.filter((r) => r.canalOrigem === 'whatsapp').length,
   }
 
   const receitaPorCanal = {
@@ -109,6 +110,9 @@ export async function getRelatorioMensal(ano: number, mes: number) {
       .reduce((acc, r) => acc + Number(r.valorTotal ?? 0), 0),
     site: rows
       .filter((r) => r.canalOrigem === 'site' && r.status === 'compareceu')
+      .reduce((acc, r) => acc + Number(r.valorTotal ?? 0), 0),
+    whatsapp: rows
+      .filter((r) => r.canalOrigem === 'whatsapp' && r.status === 'compareceu')
       .reduce((acc, r) => acc + Number(r.valorTotal ?? 0), 0),
   }
 
@@ -122,7 +126,7 @@ export async function getRelatorioMensal(ano: number, mes: number) {
     .slice(0, 8)
     .map(([hora, qtd]) => ({ hora, qtd }))
 
-  function topicoHorariosPorCanal(canal: 'reserva' | 'porta' | 'site') {
+  function topicoHorariosPorCanal(canal: 'reserva' | 'porta' | 'site' | 'whatsapp') {
     const mapa: Record<string, number> = {}
     rows
       .filter((r) => r.canalOrigem === canal)
@@ -137,6 +141,7 @@ export async function getRelatorioMensal(ano: number, mes: number) {
     reserva: topicoHorariosPorCanal('reserva'),
     porta: topicoHorariosPorCanal('porta'),
     site: topicoHorariosPorCanal('site'),
+    whatsapp: topicoHorariosPorCanal('whatsapp'),
   }
 
   const porDia: Record<string, { compareceu: number; nao_compareceu: number; receita: number }> = {}
