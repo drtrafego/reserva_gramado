@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gramado Reserva
 
-## Getting Started
+Sistema de controle de reservas do restaurante **Gramado Plazza** (Gramado, RS).
 
-First, run the development server:
+**Produção:** https://reserva.gramadoplazza.com
+**Repositório:** drtrafego/reserva_gramado
+
+---
+
+## Stack
+
+- Next.js 16 (App Router, Server Components, Server Actions)
+- TypeScript strict
+- Drizzle ORM + Neon PostgreSQL
+- shadcn/ui + Tailwind CSS v4
+- Stack Auth
+- Vercel (deploy)
+- pnpm
+
+---
+
+## Rodar localmente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Crie um `.env.local` com:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+DATABASE_URL=postgresql://...
+WEBHOOK_API_KEY=sua-chave-aqui
+NEXT_PUBLIC_STACK_PROJECT_ID=...
+NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY=...
+STACK_SECRET_SERVER_KEY=...
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Banco de dados
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Aplicar alterações de schema
+pnpm db:push
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Abrir studio visual
+pnpm db:studio
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Estrutura de rotas
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Rota | Descricao |
+|---|---|
+| `/porta` | Painel do funcionário na porta (tablet) |
+| `/admin` | Dashboard do dia |
+| `/admin/reservas` | Listagem e criação de reservas |
+| `/admin/ambientes` | Gestão de ambientes e tipos de mesa |
+| `/admin/configuracoes` | Capacidade, horários, slots, permanência |
+| `/admin/relatorios` | Relatório mensal com gráficos e CSV |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## API REST v1
+
+Para o agente de WhatsApp. Documentação completa em `docs/API_WHATSAPP_AGENT.md`.
+
+| Endpoint | Descricao |
+|---|---|
+| `GET /api/v1/disponibilidade?data=` | Capacidade geral da data |
+| `GET /api/v1/slots?data=&pessoas=&horario=` | Slots disponíveis com sugestões alternativas |
+| `GET /api/v1/reservas?telefone=&data=` | Busca reservas |
+| `POST /api/v1/reservas` | Cria reserva |
+| `GET/PATCH/DELETE /api/v1/reservas/:id` | Consulta, edita ou cancela reserva |
+
+---
+
+## Funcionalidades
+
+### Painel da Porta (tablet)
+- Lista reservas do dia com filtro por status
+- Confirmar chegada com ajuste de número de pessoas
+- Countdown regressivo após chegada (90 min normal, 120 min mesa unificada)
+- Registrar entrada sem reserva
+- Marcar no-show em lote
+- Navegar entre datas
+
+### Painel Admin
+- Dashboard com resumo do dia
+- Tabela de reservas com botão WhatsApp direto para o cliente
+- Criar reserva manual
+- Exportar CSV
+- Relatório mensal com gráficos por canal, horários de pico e receita
+
+### Ambientes e Mesas
+- Cadastrar ambientes (ex: Salão Central, Pátio)
+- Dentro de cada ambiente, definir tipos de mesa (ex: 4 mesas de 4, 5 mesas de 2, 1 mesa de 6)
+- Ambientes ativos definem a capacidade simultânea do sistema
+
+### Sistema de Slots (Rotatividade)
+- Horário de funcionamento: 18h às 22h
+- Slots a cada 30 min: 18:00, 18:30, 19:00, 19:30, 20:00, 20:30
+- Permanência normal: 90 min por grupo
+- Mesa unificada (grupos grandes): 120 min
+- Bot verifica vagas por slot e sugere horários alternativos quando cheio
+
+### Categorias de Ingressos
+| Categoria | Faixa | Valor |
+|---|---|---|
+| Integral | 10+ anos | `valorPorPessoa` |
+| Meia | 6-9 anos | R$39,95 fixo |
+| Cortesia | até 5 anos | Grátis |
+
+### Configurações ajustáveis
+- Capacidade máxima e efetiva diária (padrão: 130)
+- Permanência normal (padrão: 90 min)
+- Permanência mesa unificada (padrão: 120 min)
+- Horário de abertura e fechamento (padrão: 18h-22h)
+- Intervalo entre slots (padrão: 30 min)
+- Alerta de capacidade (padrão: 85%)
+
+---
+
+## Histórico de commits relevantes
+
+| Commit | Descricao |
+|---|---|
+| `b18e6e0` | feat: ambientes com mesas, slots, countdown, WhatsApp admin, categorias de crianças |
+| `1b88aa7` | fix: bloquear edicao e cancelamento de reservas nao-pendentes |
+| `c8745ef` | fix: INSERT condicional atomico para concorrencia |
+| `7d58e02` | feat: API REST v1 para agente de WhatsApp |
+| `d2255f7` | feat: editar reserva, exportar CSV e no-show em lote |
