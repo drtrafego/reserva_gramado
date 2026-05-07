@@ -5,20 +5,23 @@ import { validarApiKey, respostaErro } from '@/lib/api/auth'
 import { db } from '@/lib/db'
 import { reservas, restauranteConfig } from '@/lib/db/schema'
 
+const VALOR_CRIANCA_MEIA = 39.95
+
 const criarReservaSchema = z.object({
   data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data no formato YYYY-MM-DD'),
   nomeCliente: z.string().min(1).max(150),
   telefone: z.string().max(20).optional(),
   horarioReservado: z.string().regex(/^\d{2}:\d{2}$/, 'Horário no formato HH:MM'),
   adultos: z.number().int().min(1),
-  criancas50pct: z.number().int().min(0).default(0),
+  criancasMeia: z.number().int().min(0).default(0),
   criancasIsento: z.number().int().min(0).default(0),
   valorPorPessoa: z.number().min(0),
+  mesasUnificadas: z.boolean().optional().default(false),
   observacoes: z.string().max(500).optional(),
 })
 
-function calcularTotal(adultos: number, criancas50: number, valorPorPessoa: number) {
-  return adultos * valorPorPessoa + criancas50 * (valorPorPessoa * 0.5)
+function calcularTotal(adultos: number, criancasMeia: number, valorPorPessoa: number) {
+  return adultos * valorPorPessoa + criancasMeia * VALOR_CRIANCA_MEIA
 }
 
 export async function GET(req: NextRequest) {
@@ -66,28 +69,24 @@ export async function POST(req: NextRequest) {
 
   const {
     data, nomeCliente, telefone, horarioReservado,
-    adultos, criancas50pct, criancasIsento, valorPorPessoa, observacoes,
+    adultos, criancasMeia, criancasIsento, valorPorPessoa, mesasUnificadas, observacoes,
   } = parsed.data
 
-  const totalNovos = adultos + criancas50pct + criancasIsento
-  const total = calcularTotal(adultos, criancas50pct, valorPorPessoa)
+  const totalNovos = adultos + criancasMeia + criancasIsento
+  const total = calcularTotal(adultos, criancasMeia, valorPorPessoa)
 
-  // Estratégia: INSERT condicional em SQL puro — atômico por natureza.
-  // A subquery verifica a capacidade e o INSERT só acontece se houver vaga.
-  // Se duas requisições chegarem ao mesmo tempo, apenas uma passa: a que
-  // fizer o INSERT primeiro "vê" a outra no re-check pós-insert (mesmo slot).
   const result = await db.execute(sql`
     INSERT INTO reservas (
       data, nome_cliente, telefone, horario_reservado,
       adultos, criancas_50pct, criancas_isento,
       valor_por_pessoa, valor_total,
-      canal_origem, status, observacoes
+      canal_origem, status, mesas_unificadas, observacoes
     )
     SELECT
       ${data}, ${nomeCliente}, ${telefone ?? null}, ${horarioReservado},
-      ${adultos}, ${criancas50pct}, ${criancasIsento},
+      ${adultos}, ${criancasMeia}, ${criancasIsento},
       ${String(valorPorPessoa)}, ${String(total)},
-      'whatsapp', 'pendente', ${observacoes ?? null}
+      'whatsapp', 'pendente', ${mesasUnificadas ?? false}, ${observacoes ?? null}
     WHERE (
       SELECT COALESCE(SUM(adultos + criancas_50pct + criancas_isento), 0)
       FROM reservas

@@ -5,20 +5,23 @@ import { validarApiKey, respostaErro } from '@/lib/api/auth'
 import { db } from '@/lib/db'
 import { reservas } from '@/lib/db/schema'
 
+const VALOR_CRIANCA_MEIA = 39.95
+
 const atualizarReservaSchema = z.object({
   nomeCliente: z.string().min(1).max(150).optional(),
   telefone: z.string().max(20).optional(),
   horarioReservado: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   adultos: z.number().int().min(1).optional(),
-  criancas50pct: z.number().int().min(0).optional(),
+  criancasMeia: z.number().int().min(0).optional(),
   criancasIsento: z.number().int().min(0).optional(),
   valorPorPessoa: z.number().min(0).optional(),
+  mesasUnificadas: z.boolean().optional(),
   observacoes: z.string().max(500).optional(),
   status: z.enum(['pendente', 'cancelou']).optional(),
 })
 
-function calcularTotal(adultos: number, criancas50: number, valorPorPessoa: number) {
-  return adultos * valorPorPessoa + criancas50 * (valorPorPessoa * 0.5)
+function calcularTotal(adultos: number, criancasMeia: number, valorPorPessoa: number) {
+  return adultos * valorPorPessoa + criancasMeia * VALOR_CRIANCA_MEIA
 }
 
 async function buscarReserva(id: string) {
@@ -65,11 +68,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const d = parsed.data
   const adultos = d.adultos ?? reservaAtual.adultos
-  const criancas50pct = d.criancas50pct ?? reservaAtual.criancas50pct
+  const criancasMeia = d.criancasMeia ?? reservaAtual.criancas50pct
   const valorPorPessoa = d.valorPorPessoa ?? Number(reservaAtual.valorPorPessoa ?? 0)
 
   const valorTotal = valorPorPessoa > 0
-    ? String(calcularTotal(adultos, criancas50pct, valorPorPessoa))
+    ? String(calcularTotal(adultos, criancasMeia, valorPorPessoa))
     : reservaAtual.valorTotal
 
   const [atualizada] = await db
@@ -79,9 +82,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(d.telefone !== undefined && { telefone: d.telefone }),
       ...(d.horarioReservado !== undefined && { horarioReservado: d.horarioReservado }),
       ...(d.adultos !== undefined && { adultos: d.adultos }),
-      ...(d.criancas50pct !== undefined && { criancas50pct: d.criancas50pct }),
+      ...(d.criancasMeia !== undefined && { criancas50pct: d.criancasMeia }),
       ...(d.criancasIsento !== undefined && { criancasIsento: d.criancasIsento }),
       ...(d.valorPorPessoa !== undefined && { valorPorPessoa: String(d.valorPorPessoa) }),
+      ...(d.mesasUnificadas !== undefined && { mesasUnificadas: d.mesasUnificadas }),
       ...(d.observacoes !== undefined && { observacoes: d.observacoes }),
       ...(d.status !== undefined && { status: d.status }),
       valorTotal,

@@ -33,8 +33,10 @@ export default async function PortaPage({ searchParams }: Props) {
     getCapacidadeOcupada(dataValida),
   ])
 
-  const capacidadeEfetiva = config?.capacidadeEfetiva ?? 70
+  const capacidadeEfetiva = config?.capacidadeEfetiva ?? 130
   const alertaPct = config?.alertaCapacidadePct ?? 85
+  const tempoPermanenciaMin = config?.tempoPermanenciaMin ?? 90
+  const tempoPermanenciaUnificadaMin = config?.tempoPermanenciaUnificadaMin ?? 120
 
   return (
     <PainelPorta
@@ -45,6 +47,8 @@ export default async function PortaPage({ searchParams }: Props) {
       dataFormatada={dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1)}
       dataSelecionada={dataValida}
       isHoje={isHoje}
+      tempoPermanenciaMin={tempoPermanenciaMin}
+      tempoPermanenciaUnificadaMin={tempoPermanenciaUnificadaMin}
     />
   )
 }

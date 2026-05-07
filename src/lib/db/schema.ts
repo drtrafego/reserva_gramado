@@ -23,10 +23,14 @@ export const statusReservaEnum = pgEnum('status_reserva', [
 
 export const restauranteConfig = pgTable('restaurante_config', {
   id: uuid('id').primaryKey().defaultRandom(),
-  capacidadeMaxima: integer('capacidade_maxima').notNull().default(77),
-  capacidadeEfetiva: integer('capacidade_efetiva').notNull().default(70),
-  tempoPermanenciaMin: integer('tempo_permanencia_min').notNull().default(60),
+  capacidadeMaxima: integer('capacidade_maxima').notNull().default(130),
+  capacidadeEfetiva: integer('capacidade_efetiva').notNull().default(130),
+  tempoPermanenciaMin: integer('tempo_permanencia_min').notNull().default(90),
+  tempoPermanenciaUnificadaMin: integer('tempo_permanencia_unificada_min').notNull().default(120),
   alertaCapacidadePct: integer('alerta_capacidade_pct').notNull().default(85),
+  horarioInicio: varchar('horario_inicio', { length: 5 }).notNull().default('18:00'),
+  horarioFim: varchar('horario_fim', { length: 5 }).notNull().default('22:00'),
+  intervaloSlotMin: integer('intervalo_slot_min').notNull().default(30),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -34,13 +38,19 @@ export const restauranteConfig = pgTable('restaurante_config', {
 export const ambientes = pgTable('ambientes', {
   id: uuid('id').primaryKey().defaultRandom(),
   nome: varchar('nome', { length: 100 }).notNull(),
-  qtdMesas: integer('qtd_mesas').notNull(),
-  capacidadePessoas: integer('capacidade_pessoas').notNull(),
   permiteJuntarMesas: boolean('permite_juntar_mesas').default(false),
   juntarApartirDe: integer('juntar_a_partir_de'),
   ativo: boolean('ativo').default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const tiposMesa = pgTable('tipos_mesa', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ambienteId: uuid('ambiente_id').notNull().references(() => ambientes.id, { onDelete: 'cascade' }),
+  capacidade: integer('capacidade').notNull(),
+  quantidade: integer('quantidade').notNull().default(1),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
 export const reservas = pgTable(
@@ -60,6 +70,7 @@ export const reservas = pgTable(
     valorTotal: decimal('valor_total', { precision: 10, scale: 2 }),
     canalOrigem: canalOrigemEnum('canal_origem').notNull(),
     status: statusReservaEnum('status').notNull().default('pendente'),
+    mesasUnificadas: boolean('mesas_unificadas').default(false),
     observacoes: text('observacoes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -76,3 +87,5 @@ export type Reserva = typeof reservas.$inferSelect
 export type NovaReserva = typeof reservas.$inferInsert
 export type CanalOrigem = (typeof canalOrigemEnum.enumValues)[number]
 export type StatusReserva = (typeof statusReservaEnum.enumValues)[number]
+export type Ambiente = typeof ambientes.$inferSelect
+export type TipoMesa = typeof tiposMesa.$inferSelect

@@ -23,6 +23,8 @@ interface Props {
   dataFormatada: string
   dataSelecionada: string
   isHoje: boolean
+  tempoPermanenciaMin?: number
+  tempoPermanenciaUnificadaMin?: number
 }
 
 const FILTROS: { valor: FiltroStatus; label: string; icone: React.ElementType; cor: string }[] = [
@@ -46,6 +48,8 @@ export function PainelPorta({
   dataFormatada,
   dataSelecionada,
   isHoje,
+  tempoPermanenciaMin = 90,
+  tempoPermanenciaUnificadaMin = 120,
 }: Props) {
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
@@ -198,7 +202,8 @@ export function PainelPorta({
               reserva={r}
               onConfirmar={setReservaConfirmando}
               onEditar={setReservaEditando}
-              dataSelecionada={dataSelecionada}
+              tempoPermanenciaMin={tempoPermanenciaMin}
+              tempoPermanenciaUnificadaMin={tempoPermanenciaUnificadaMin}
             />
           ))
         )}

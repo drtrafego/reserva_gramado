@@ -10,19 +10,32 @@ export async function atualizarConfig(formData: FormData) {
   const capacidadeMaxima = Number(formData.get('capacidadeMaxima'))
   const capacidadeEfetiva = Number(formData.get('capacidadeEfetiva'))
   const tempoPermanenciaMin = Number(formData.get('tempoPermanenciaMin'))
+  const tempoPermanenciaUnificadaMin = Number(formData.get('tempoPermanenciaUnificadaMin')) || 120
   const alertaCapacidadePct = Number(formData.get('alertaCapacidadePct'))
+  const horarioInicio = String(formData.get('horarioInicio') || '18:00')
+  const horarioFim = String(formData.get('horarioFim') || '22:00')
+  const intervaloSlotMin = Number(formData.get('intervaloSlotMin')) || 30
 
   if (!capacidadeMaxima || !capacidadeEfetiva || !tempoPermanenciaMin || !alertaCapacidadePct) {
     return { error: 'Todos os campos são obrigatórios' }
   }
 
+  const valores = {
+    capacidadeMaxima,
+    capacidadeEfetiva,
+    tempoPermanenciaMin,
+    tempoPermanenciaUnificadaMin,
+    alertaCapacidadePct,
+    horarioInicio,
+    horarioFim,
+    intervaloSlotMin,
+    updatedAt: new Date(),
+  }
+
   if (id) {
-    await db
-      .update(restauranteConfig)
-      .set({ capacidadeMaxima, capacidadeEfetiva, tempoPermanenciaMin, alertaCapacidadePct, updatedAt: new Date() })
-      .where(eq(restauranteConfig.id, id))
+    await db.update(restauranteConfig).set(valores).where(eq(restauranteConfig.id, id))
   } else {
-    await db.insert(restauranteConfig).values({ capacidadeMaxima, capacidadeEfetiva, tempoPermanenciaMin, alertaCapacidadePct })
+    await db.insert(restauranteConfig).values(valores)
   }
 
   revalidatePath('/admin/configuracoes')

@@ -1,11 +1,9 @@
 import Link from 'next/link'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { getTodasReservas } from '@/lib/db/queries'
 import { BadgeCanal } from '@/components/porta/BadgeCanal'
 import { BadgeStatus } from '@/components/porta/BadgeStatus'
-import { Button } from '@/components/ui/button'
 import { PlusCircle } from 'lucide-react'
+import { BotaoWhatsApp } from '@/components/admin/BotaoWhatsApp'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,6 +53,7 @@ export default async function ReservasPage() {
                 <th className="px-4 py-3">Total</th>
                 <th className="px-4 py-3">Canal</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">WhatsApp</th>
                 <th className="px-4 py-3">Obs</th>
               </tr>
             </thead>
@@ -69,13 +68,16 @@ export default async function ReservasPage() {
                   <td className="px-4 py-3 text-gray-600">{r.horarioReservado ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                     {r.adultos}A
-                    {r.criancas50pct > 0 && ` + ${r.criancas50pct}C50%`}
-                    {r.criancasIsento > 0 && ` + ${r.criancasIsento}C`}
+                    {r.criancas50pct > 0 && ` + ${r.criancas50pct} Meia`}
+                    {r.criancasIsento > 0 && ` + ${r.criancasIsento} Cortesia`}
                   </td>
                   <td className="px-4 py-3 text-gray-600">{fmt(r.valorPorPessoa)}</td>
                   <td className="px-4 py-3 font-semibold text-gray-800">{fmt(r.valorTotal)}</td>
                   <td className="px-4 py-3"><BadgeCanal canal={r.canalOrigem} /></td>
                   <td className="px-4 py-3"><BadgeStatus status={r.status} /></td>
+                  <td className="px-4 py-3">
+                    <BotaoWhatsApp reserva={r} />
+                  </td>
                   <td className="px-4 py-3 text-gray-500 max-w-[160px] truncate">{r.observacoes ?? '-'}</td>
                 </tr>
               ))}

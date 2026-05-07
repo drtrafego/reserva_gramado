@@ -1,8 +1,8 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useTransition, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, Clock, Users, DollarSign, MessageCircle, Pencil } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Users, DollarSign, Pencil, Timer } from 'lucide-react'
 import { BadgeCanal } from './BadgeCanal'
 import { marcarNaoCompareceu } from '@/lib/actions/reservas'
 import { toast } from 'sonner'
@@ -12,7 +12,8 @@ interface Props {
   reserva: Reserva
   onConfirmar: (reserva: Reserva) => void
   onEditar: (reserva: Reserva) => void
-  dataSelecionada?: string
+  tempoPermanenciaMin?: number
+  tempoPermanenciaUnificadaMin?: number
 }
 
 function fmtBRL(v: string | null | undefined) {
@@ -20,49 +21,72 @@ function fmtBRL(v: string | null | undefined) {
   return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-function limparTelefone(tel: string): string {
-  const digits = tel.replace(/\D/g, '')
-  if (digits.startsWith('55')) return digits
-  return '55' + digits
+function calcularMinutosRestantes(
+  horarioChegada: string,
+  duracao: number
+): number {
+  const agora = new Date()
+  const [h, m] = horarioChegada.split(':').map(Number)
+  const chegada = new Date(agora)
+  chegada.setHours(h, m, 0, 0)
+  const saida = new Date(chegada.getTime() + duracao * 60 * 1000)
+  return Math.ceil((saida.getTime() - agora.getTime()) / 60000)
 }
 
-function gerarMsgWhatsApp(reserva: Reserva, data: string): string {
-  const nome = reserva.nomeCliente ?? 'cliente'
-  const parteNome = nome.split(' ')[0]
-  const totalPessoas = reserva.adultos + reserva.criancas50pct + reserva.criancasIsento
+function CountdownTimer({
+  horarioChegada,
+  duracao,
+}: {
+  horarioChegada: string
+  duracao: number
+}) {
+  const [minutos, setMinutos] = useState(() =>
+    calcularMinutosRestantes(horarioChegada, duracao)
+  )
 
-  const [ano, mes, dia] = data.split('-')
-  const dataFormatada = `${dia}/${mes}/${ano}`
-  const horario = reserva.horarioReservado ?? ''
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setMinutos(calcularMinutosRestantes(horarioChegada, duracao))
+    }, 30000)
+    return () => clearInterval(tick)
+  }, [horarioChegada, duracao])
 
-  const linhas = [
-    `Olá, ${parteNome}! Tudo bem?`,
-    ``,
-    `Passando para confirmar sua reserva no *Gramado Plazza*:`,
-    `📅 *Data:* ${dataFormatada}`,
-    horario ? `🕐 *Horário:* ${horario}` : null,
-    `👥 *Pessoas:* ${totalPessoas}`,
-    ``,
-    `Você confirma a presença? Responda *SIM* para confirmar ou *NÃO* caso precise cancelar.`,
-    ``,
-    `Qualquer dúvida estamos à disposição! 😊`,
-  ].filter((l) => l !== null).join('\n')
+  if (minutos <= 0) {
+    return (
+      <span className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-200">
+        <Timer className="w-3 h-3" />
+        Mesa liberada
+      </span>
+    )
+  }
 
-  return encodeURIComponent(linhas)
+  const cor = minutos <= 15
+    ? 'text-red-600 bg-red-50 border-red-200'
+    : minutos <= 30
+    ? 'text-amber-600 bg-amber-50 border-amber-200'
+    : 'text-emerald-600 bg-emerald-50 border-emerald-200'
+
+  return (
+    <span className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full border ${cor}`}>
+      <Timer className="w-3 h-3" />
+      {minutos} min restantes
+    </span>
+  )
 }
 
-export function CardReserva({ reserva, onConfirmar, onEditar, dataSelecionada }: Props) {
+export function CardReserva({
+  reserva,
+  onConfirmar,
+  onEditar,
+  tempoPermanenciaMin = 90,
+  tempoPermanenciaUnificadaMin = 120,
+}: Props) {
   const [pending, startTransition] = useTransition()
   const isPendente = reserva.status === 'pendente'
   const chegou = reserva.status === 'compareceu'
   const naoVeio = reserva.status === 'nao_compareceu'
   const totalPessoas = reserva.adultos + reserva.criancas50pct + reserva.criancasIsento
-  const data = dataSelecionada ?? new Date().toISOString().slice(0, 10)
-
-  const temWhatsApp = reserva.telefone && reserva.canalOrigem !== 'porta'
-  const whatsappUrl = temWhatsApp
-    ? `https://wa.me/${limparTelefone(reserva.telefone!)}?text=${gerarMsgWhatsApp(reserva, data)}`
-    : null
+  const duracao = reserva.mesasUnificadas ? tempoPermanenciaUnificadaMin : tempoPermanenciaMin
 
   function handleNaoCompareceu() {
     startTransition(async () => {
@@ -97,6 +121,11 @@ export function CardReserva({ reserva, onConfirmar, onEditar, dataSelecionada }:
                   Confirmado
                 </span>
               )}
+              {reserva.mesasUnificadas && (
+                <span className="text-xs font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                  Mesa unificada
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-3 mt-1.5">
               {reserva.horarioReservado && (
@@ -125,6 +154,11 @@ export function CardReserva({ reserva, onConfirmar, onEditar, dataSelecionada }:
             {reserva.telefone && (
               <p className="text-xs text-gray-400 mt-1">{reserva.telefone}</p>
             )}
+            {chegou && reserva.horarioChegada && (
+              <div className="mt-2">
+                <CountdownTimer horarioChegada={reserva.horarioChegada} duracao={duracao} />
+              </div>
+            )}
           </div>
           <div className="shrink-0 flex items-start gap-2">
             <BadgeCanal canal={reserva.canalOrigem} />
@@ -143,38 +177,23 @@ export function CardReserva({ reserva, onConfirmar, onEditar, dataSelecionada }:
           </p>
         )}
 
-        {(isPendente || whatsappUrl) && (
+        {isPendente && (
           <div className="flex gap-2 mt-3">
-            {isPendente && (
-              <>
-                <Button
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 h-12 text-base font-bold rounded-xl"
-                  onClick={() => onConfirmar(reserva)}
-                >
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Confirmar chegada
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-12 border-red-200 text-red-500 hover:bg-red-50 h-12 rounded-xl"
-                  onClick={handleNaoCompareceu}
-                  disabled={pending}
-                >
-                  <XCircle className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-            {whatsappUrl && (
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold rounded-xl h-12 transition-colors ${isPendente ? 'w-12' : 'flex-1'}`}
-              >
-                <MessageCircle className="w-5 h-5" />
-                {!isPendente && <span>Confirmar via WhatsApp</span>}
-              </a>
-            )}
+            <Button
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 h-12 text-base font-bold rounded-xl"
+              onClick={() => onConfirmar(reserva)}
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Confirmar chegada
+            </Button>
+            <Button
+              variant="outline"
+              className="w-12 border-red-200 text-red-500 hover:bg-red-50 h-12 rounded-xl"
+              onClick={handleNaoCompareceu}
+              disabled={pending}
+            >
+              <XCircle className="w-4 h-4" />
+            </Button>
           </div>
         )}
       </div>

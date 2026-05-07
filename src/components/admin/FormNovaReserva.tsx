@@ -23,7 +23,8 @@ export function FormNovaReserva() {
   const [valorPorPessoa, setValorPorPessoa] = useState('69.90')
   const [canal, setCanal] = useState('reserva')
 
-  const total = adultos * Number(valorPorPessoa) + criancas50 * (Number(valorPorPessoa) * 0.5)
+  const VALOR_MEIA = 39.95
+  const total = adultos * Number(valorPorPessoa) + criancas50 * VALOR_MEIA
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -133,7 +134,7 @@ export function FormNovaReserva() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="criancas50pct">Crianças 50% (5-9 anos)</Label>
+          <Label htmlFor="criancas50pct">Meia R$39,95 (6-9 anos)</Label>
           <Input
             id="criancas50pct"
             name="criancas50pct"
@@ -145,7 +146,7 @@ export function FormNovaReserva() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="criancasIsento">Crianças isentas (até 4 anos)</Label>
+          <Label htmlFor="criancasIsento">Cortesia (até 5 anos)</Label>
           <Input
             id="criancasIsento"
             name="criancasIsento"

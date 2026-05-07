@@ -24,7 +24,8 @@ export function ModalEntradaPorta({ open, onClose }: Props) {
   const [criancasIsento, setCriancasIsento] = useState(0)
   const [valorPorPessoa, setValorPorPessoa] = useState('69.90')
 
-  const total = adultos * Number(valorPorPessoa) + criancas50 * (Number(valorPorPessoa) * 0.5)
+  const VALOR_MEIA = 39.95
+  const total = adultos * Number(valorPorPessoa) + criancas50 * VALOR_MEIA
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -73,7 +74,7 @@ export function ModalEntradaPorta({ open, onClose }: Props) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Cri. 50%</Label>
+              <Label>Meia 6-9a</Label>
               <Input
                 name="criancas50pct"
                 type="number"
@@ -84,7 +85,7 @@ export function ModalEntradaPorta({ open, onClose }: Props) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Cri. Grátis</Label>
+              <Label>Cortesia</Label>
               <Input
                 name="criancasIsento"
                 type="number"

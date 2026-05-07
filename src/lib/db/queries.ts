@@ -1,6 +1,6 @@
 import { eq, and, sql, gte, lte, desc } from 'drizzle-orm'
 import { db } from './index'
-import { reservas, restauranteConfig, ambientes } from './schema'
+import { reservas, restauranteConfig, ambientes, tiposMesa } from './schema'
 import type { StatusReserva } from './schema'
 
 export async function getReservasDoDia(data: string) {
@@ -69,7 +69,91 @@ export async function getResumoDoDia(data: string) {
 }
 
 export async function getAmbientes() {
-  return db.select().from(ambientes).orderBy(ambientes.nome)
+  const lista = await db.select().from(ambientes).orderBy(ambientes.nome)
+  const mesas = await db.select().from(tiposMesa)
+  return lista.map((a) => ({
+    ...a,
+    tiposMesa: mesas.filter((m) => m.ambienteId === a.id),
+  }))
+}
+
+export async function getCapacidadeSimultanea(): Promise<number> {
+  const mesas = await db
+    .select({ capacidade: tiposMesa.capacidade, quantidade: tiposMesa.quantidade })
+    .from(tiposMesa)
+    .innerJoin(ambientes, eq(tiposMesa.ambienteId, ambientes.id))
+    .where(eq(ambientes.ativo, true))
+  return mesas.reduce((sum, m) => sum + m.capacidade * m.quantidade, 0)
+}
+
+export async function getSlotsDisponiveis(data: string, pessoas: number) {
+  const config = await getConfig()
+  if (!config) return []
+
+  const capacidadeSimultanea = await getCapacidadeSimultanea()
+  const limiteDiario = config.capacidadeEfetiva
+
+  const reservasDoDia = await db
+    .select({
+      horarioReservado: reservas.horarioReservado,
+      adultos: reservas.adultos,
+      criancas50pct: reservas.criancas50pct,
+      criancasIsento: reservas.criancasIsento,
+      mesasUnificadas: reservas.mesasUnificadas,
+      status: reservas.status,
+    })
+    .from(reservas)
+    .where(and(eq(reservas.data, data), eq(reservas.status, 'pendente')))
+
+  const totalDiario = reservasDoDia.reduce(
+    (s, r) => s + r.adultos + r.criancas50pct + r.criancasIsento,
+    0
+  )
+
+  const [inicioH, inicioM] = config.horarioInicio.split(':').map(Number)
+  const [fimH, fimM] = config.horarioFim.split(':').map(Number)
+  const inicioMin = inicioH * 60 + inicioM
+  const fimMin = fimH * 60 + fimM
+  const duracao = config.tempoPermanenciaMin
+  const intervalo = config.intervaloSlotMin
+
+  function minToHH(min: number) {
+    const h = Math.floor(min / 60).toString().padStart(2, '0')
+    const m = (min % 60).toString().padStart(2, '0')
+    return `${h}:${m}`
+  }
+
+  const slots = []
+  for (let t = inicioMin; t + duracao <= fimMin; t += intervalo) {
+    const horario = minToHH(t)
+
+    const ocupadosNoSlot = reservasDoDia.reduce((s, r) => {
+      if (!r.horarioReservado) return s
+      const [rH, rM] = r.horarioReservado.split(':').map(Number)
+      const rMin = rH * 60 + rM
+      const rDur = r.mesasUnificadas ? config.tempoPermanenciaUnificadaMin : duracao
+      if (rMin < t + duracao && t < rMin + rDur) {
+        return s + r.adultos + r.criancas50pct + r.criancasIsento
+      }
+      return s
+    }, 0)
+
+    const vagasSimultaneas = capacidadeSimultanea > 0
+      ? Math.max(0, capacidadeSimultanea - ocupadosNoSlot)
+      : Math.max(0, limiteDiario - totalDiario)
+
+    const vagasDiarias = Math.max(0, limiteDiario - totalDiario)
+    const vagas = Math.min(vagasSimultaneas, vagasDiarias)
+
+    slots.push({
+      horario,
+      disponivel: vagas >= pessoas,
+      vagasRestantes: vagas,
+      ocupados: ocupadosNoSlot,
+    })
+  }
+
+  return slots
 }
 
 export async function getRelatorioMensal(ano: number, mes: number) {

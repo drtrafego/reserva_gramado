@@ -19,7 +19,9 @@ interface Props {
 export function ModalConfirmarChegada({ reserva, open, onClose }: Props) {
   const [pending, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
-  const totalReservado = reserva ? reserva.adultos + reserva.criancas50pct + reserva.criancasIsento : 1
+  const totalReservado = reserva
+    ? reserva.adultos + reserva.criancas50pct + reserva.criancasIsento
+    : 1
   const [pessoas, setPessoas] = useState(totalReservado.toString())
 
   if (!reserva) return null

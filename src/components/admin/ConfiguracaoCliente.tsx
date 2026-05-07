@@ -13,7 +13,11 @@ type Config = {
   capacidadeMaxima: number
   capacidadeEfetiva: number
   tempoPermanenciaMin: number
+  tempoPermanenciaUnificadaMin: number
   alertaCapacidadePct: number
+  horarioInicio: string
+  horarioFim: string
+  intervaloSlotMin: number
 } | null
 
 export function ConfiguracaoCliente({ config }: { config: Config }) {
@@ -45,17 +49,17 @@ export function ConfiguracaoCliente({ config }: { config: Config }) {
             <div className="space-y-2">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="w-4 h-4 text-gray-400" />
-                <Label htmlFor="capacidadeMaxima" className="font-semibold">Capacidade máxima</Label>
+                <Label htmlFor="capacidadeMaxima" className="font-semibold">Capacidade máxima (pessoas/dia)</Label>
               </div>
               <Input
                 id="capacidadeMaxima"
                 name="capacidadeMaxima"
                 type="number"
                 min={1}
-                defaultValue={config?.capacidadeMaxima ?? 77}
+                defaultValue={config?.capacidadeMaxima ?? 130}
                 required
               />
-              <p className="text-xs text-gray-400">Máximo absoluto de pessoas no restaurante</p>
+              <p className="text-xs text-gray-400">Limite diário total de pessoas</p>
             </div>
 
             <div className="space-y-2">
@@ -68,16 +72,16 @@ export function ConfiguracaoCliente({ config }: { config: Config }) {
                 name="capacidadeEfetiva"
                 type="number"
                 min={1}
-                defaultValue={config?.capacidadeEfetiva ?? 70}
+                defaultValue={config?.capacidadeEfetiva ?? 130}
                 required
               />
-              <p className="text-xs text-gray-400">Capacidade real considerando mesas juntas e layouts</p>
+              <p className="text-xs text-gray-400">Capacidade usada nas verificações do bot e da porta</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="w-4 h-4 text-gray-400" />
-                <Label htmlFor="tempoPermanenciaMin" className="font-semibold">Tempo de permanência (min)</Label>
+                <Label htmlFor="tempoPermanenciaMin" className="font-semibold">Permanência normal (min)</Label>
               </div>
               <Input
                 id="tempoPermanenciaMin"
@@ -85,10 +89,72 @@ export function ConfiguracaoCliente({ config }: { config: Config }) {
                 type="number"
                 min={15}
                 step={15}
-                defaultValue={config?.tempoPermanenciaMin ?? 60}
+                defaultValue={config?.tempoPermanenciaMin ?? 90}
                 required
               />
-              <p className="text-xs text-gray-400">Tempo médio que os clientes ficam no restaurante</p>
+              <p className="text-xs text-gray-400">Tempo médio por grupo (padrão: 90 min)</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <Label htmlFor="tempoPermanenciaUnificadaMin" className="font-semibold">Permanência mesa unificada (min)</Label>
+              </div>
+              <Input
+                id="tempoPermanenciaUnificadaMin"
+                name="tempoPermanenciaUnificadaMin"
+                type="number"
+                min={15}
+                step={15}
+                defaultValue={config?.tempoPermanenciaUnificadaMin ?? 120}
+                required
+              />
+              <p className="text-xs text-gray-400">Tempo para grupos com mesas unificadas (padrão: 120 min)</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <Label htmlFor="horarioInicio" className="font-semibold">Horário de abertura</Label>
+              </div>
+              <Input
+                id="horarioInicio"
+                name="horarioInicio"
+                type="time"
+                defaultValue={config?.horarioInicio ?? '18:00'}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <Label htmlFor="horarioFim" className="font-semibold">Horário de fechamento</Label>
+              </div>
+              <Input
+                id="horarioFim"
+                name="horarioFim"
+                type="time"
+                defaultValue={config?.horarioFim ?? '22:00'}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <Label htmlFor="intervaloSlotMin" className="font-semibold">Intervalo entre slots (min)</Label>
+              </div>
+              <Input
+                id="intervaloSlotMin"
+                name="intervaloSlotMin"
+                type="number"
+                min={15}
+                step={15}
+                defaultValue={config?.intervaloSlotMin ?? 30}
+                required
+              />
+              <p className="text-xs text-gray-400">Granularidade dos horários disponíveis (padrão: 30 min)</p>
             </div>
 
             <div className="space-y-2">
@@ -105,7 +171,7 @@ export function ConfiguracaoCliente({ config }: { config: Config }) {
                 defaultValue={config?.alertaCapacidadePct ?? 85}
                 required
               />
-              <p className="text-xs text-gray-400">Percentual para acionar alerta de capacidade no painel da porta</p>
+              <p className="text-xs text-gray-400">Percentual para acionar alerta na Porta</p>
             </div>
           </div>
 

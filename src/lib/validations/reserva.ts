@@ -13,6 +13,7 @@ export const entradaPortaSchema = z.object({
   criancas50pct: z.coerce.number().int().min(0).default(0),
   criancasIsento: z.coerce.number().int().min(0).default(0),
   valorPorPessoa: z.coerce.number().min(0).optional(),
+  mesasUnificadas: z.coerce.boolean().optional().default(false),
   observacoes: z.string().max(500).optional(),
 })
 
@@ -26,6 +27,7 @@ export const novaReservaSchema = z.object({
   criancasIsento: z.coerce.number().int().min(0).default(0),
   valorPorPessoa: z.coerce.number().min(0),
   canalOrigem: z.enum(['reserva', 'porta', 'site', 'whatsapp']),
+  mesasUnificadas: z.coerce.boolean().optional().default(false),
   observacoes: z.string().max(500).optional(),
 })
 
@@ -38,6 +40,7 @@ export const editarReservaSchema = z.object({
   criancas50pct: z.coerce.number().int().min(0).default(0),
   criancasIsento: z.coerce.number().int().min(0).default(0),
   valorPorPessoa: z.coerce.number().min(0).optional(),
+  mesasUnificadas: z.coerce.boolean().optional().default(false),
   observacoes: z.string().max(500).optional(),
 })
 

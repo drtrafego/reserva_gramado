@@ -12,8 +12,10 @@ import {
 } from '@/lib/validations/reserva'
 import { format } from 'date-fns'
 
-function calcularTotal(adultos: number, criancas50: number, valorPorPessoa: number) {
-  return adultos * valorPorPessoa + criancas50 * (valorPorPessoa * 0.5)
+const VALOR_CRIANCA_MEIA = 39.95
+
+function calcularTotal(adultos: number, criancasMeia: number, valorPorPessoa: number) {
+  return adultos * valorPorPessoa + criancasMeia * VALOR_CRIANCA_MEIA
 }
 
 export async function confirmarChegada(formData: FormData) {
@@ -61,13 +63,14 @@ export async function registrarEntradaPorta(formData: FormData) {
     criancas50pct: formData.get('criancas50pct') ?? '0',
     criancasIsento: formData.get('criancasIsento') ?? '0',
     valorPorPessoa: formData.get('valorPorPessoa'),
+    mesasUnificadas: formData.get('mesasUnificadas') ?? 'false',
     observacoes: formData.get('observacoes'),
   }
 
   const parsed = entradaPortaSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const { adultos, criancas50pct, criancasIsento, valorPorPessoa } = parsed.data
+  const { adultos, criancas50pct, criancasIsento, valorPorPessoa, mesasUnificadas } = parsed.data
   const total = valorPorPessoa ? calcularTotal(adultos, criancas50pct, valorPorPessoa) : null
   const agora = new Date()
 
@@ -83,6 +86,7 @@ export async function registrarEntradaPorta(formData: FormData) {
     valorTotal: total ? String(total) : null,
     canalOrigem: 'porta',
     status: 'compareceu',
+    mesasUnificadas: mesasUnificadas ?? false,
     observacoes: parsed.data.observacoes ?? null,
   })
 
@@ -96,7 +100,7 @@ export async function criarReserva(formData: FormData) {
   const parsed = novaReservaSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const { adultos, criancas50pct, criancasIsento, valorPorPessoa } = parsed.data
+  const { adultos, criancas50pct, criancasIsento, valorPorPessoa, mesasUnificadas } = parsed.data
   const total = calcularTotal(adultos, criancas50pct ?? 0, valorPorPessoa)
 
   await db.insert(reservas).values({
@@ -111,6 +115,7 @@ export async function criarReserva(formData: FormData) {
     valorTotal: String(total),
     canalOrigem: parsed.data.canalOrigem,
     status: 'pendente',
+    mesasUnificadas: mesasUnificadas ?? false,
     observacoes: parsed.data.observacoes ?? null,
   })
 
@@ -129,13 +134,14 @@ export async function editarReserva(formData: FormData) {
     criancas50pct: formData.get('criancas50pct') ?? '0',
     criancasIsento: formData.get('criancasIsento') ?? '0',
     valorPorPessoa: formData.get('valorPorPessoa') || undefined,
+    mesasUnificadas: formData.get('mesasUnificadas') ?? 'false',
     observacoes: formData.get('observacoes') || undefined,
   }
 
   const parsed = editarReservaSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const { adultos, criancas50pct, criancasIsento, valorPorPessoa } = parsed.data
+  const { adultos, criancas50pct, criancasIsento, valorPorPessoa, mesasUnificadas } = parsed.data
   const valorTotal = valorPorPessoa
     ? calcularTotal(adultos, criancas50pct, valorPorPessoa)
     : null
@@ -151,6 +157,7 @@ export async function editarReserva(formData: FormData) {
       criancasIsento,
       valorPorPessoa: valorPorPessoa ? String(valorPorPessoa) : null,
       valorTotal: valorTotal ? String(valorTotal) : null,
+      mesasUnificadas: mesasUnificadas ?? false,
       observacoes: parsed.data.observacoes ?? null,
       updatedAt: new Date(),
     })

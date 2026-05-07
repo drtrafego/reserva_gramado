@@ -91,7 +91,7 @@ export function ModalEditarReserva({ reserva, open, onClose }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-c50">Crianças 50%</Label>
+              <Label htmlFor="edit-c50">Meia R$39,95 (6-9 anos)</Label>
               <Input
                 id="edit-c50"
                 name="criancas50pct"
@@ -101,7 +101,7 @@ export function ModalEditarReserva({ reserva, open, onClose }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-cis">Crianças isentas</Label>
+              <Label htmlFor="edit-cis">Cortesia (até 5 anos)</Label>
               <Input
                 id="edit-cis"
                 name="criancasIsento"
