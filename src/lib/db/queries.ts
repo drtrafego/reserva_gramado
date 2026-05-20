@@ -39,7 +39,7 @@ export async function getConfig() {
 export async function getCapacidadeOcupada(data: string) {
   const result = await db
     .select({
-      total: sql<number>`coalesce(sum(${reservas.adultos} + ${reservas.criancas50pct} + ${reservas.criancasIsento}), 0)`,
+      total: sql<number>`coalesce(sum(${reservas.adultos} + ${reservas.criancas50pct} + ${reservas.criancasIsento} + ${reservas.criancasIntegral}), 0)`,
     })
     .from(reservas)
     .where(and(eq(reservas.data, data), eq(reservas.status, 'pendente')))
@@ -53,7 +53,7 @@ export async function getResumoDoDia(data: string) {
   const naoCompareceu = rows.filter((r) => r.status === 'nao_compareceu').length
   const pendente = rows.filter((r) => r.status === 'pendente').length
   const pessoasEsperadas = rows.reduce(
-    (acc, r) => acc + r.adultos + r.criancas50pct + r.criancasIsento,
+    (acc, r) => acc + r.adultos + r.criancas50pct + r.criancasIsento + r.criancasIntegral,
     0
   )
   const receitaGerada = rows
@@ -99,6 +99,7 @@ export async function getSlotsDisponiveis(data: string, pessoas: number) {
       adultos: reservas.adultos,
       criancas50pct: reservas.criancas50pct,
       criancasIsento: reservas.criancasIsento,
+      criancasIntegral: reservas.criancasIntegral,
       mesasUnificadas: reservas.mesasUnificadas,
       status: reservas.status,
     })
@@ -106,7 +107,7 @@ export async function getSlotsDisponiveis(data: string, pessoas: number) {
     .where(and(eq(reservas.data, data), eq(reservas.status, 'pendente')))
 
   const totalDiario = reservasDoDia.reduce(
-    (s, r) => s + r.adultos + r.criancas50pct + r.criancasIsento,
+    (s, r) => s + r.adultos + r.criancas50pct + r.criancasIsento + r.criancasIntegral,
     0
   )
 
@@ -133,7 +134,7 @@ export async function getSlotsDisponiveis(data: string, pessoas: number) {
       const rMin = rH * 60 + rM
       const rDur = r.mesasUnificadas ? config.tempoPermanenciaUnificadaMin : duracao
       if (rMin < t + duracao && t < rMin + rDur) {
-        return s + r.adultos + r.criancas50pct + r.criancasIsento
+        return s + r.adultos + r.criancas50pct + r.criancasIsento + r.criancasIntegral
       }
       return s
     }, 0)

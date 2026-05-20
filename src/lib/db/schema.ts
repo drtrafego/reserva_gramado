@@ -65,6 +65,7 @@ export const reservas = pgTable(
     adultos: integer('adultos').notNull().default(1),
     criancas50pct: integer('criancas_50pct').notNull().default(0),
     criancasIsento: integer('criancas_isento').notNull().default(0),
+    criancasIntegral: integer('criancas_integral').notNull().default(0),
     pessoasChegada: integer('pessoas_chegada'),
     valorPorPessoa: decimal('valor_por_pessoa', { precision: 10, scale: 2 }),
     valorTotal: decimal('valor_total', { precision: 10, scale: 2 }),

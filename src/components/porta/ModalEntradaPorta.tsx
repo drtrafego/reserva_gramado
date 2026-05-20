@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { registrarEntradaPorta } from '@/lib/actions/reservas'
 import { toast } from 'sonner'
 
-const VALORES_PADRAO = ['49.90', '69.90', '79.90', '89.90']
+const VALORES_PADRAO = ['59.90', '69.90', '79.90', '99.90']
 
 interface Props {
   open: boolean
@@ -22,10 +22,11 @@ export function ModalEntradaPorta({ open, onClose }: Props) {
   const [adultos, setAdultos] = useState(2)
   const [criancas50, setCriancas50] = useState(0)
   const [criancasIsento, setCriancasIsento] = useState(0)
-  const [valorPorPessoa, setValorPorPessoa] = useState('69.90')
+  const [criancasIntegral, setCriancasIntegral] = useState(0)
+  const [valorPorPessoa, setValorPorPessoa] = useState('59.90')
 
   const VALOR_MEIA = 39.95
-  const total = adultos * Number(valorPorPessoa) + criancas50 * VALOR_MEIA
+  const total = (adultos + criancasIntegral) * Number(valorPorPessoa) + criancas50 * VALOR_MEIA
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,6 +44,7 @@ export function ModalEntradaPorta({ open, onClose }: Props) {
       setAdultos(2)
       setCriancas50(0)
       setCriancasIsento(0)
+      setCriancasIntegral(0)
       onClose()
     })
   }
@@ -60,7 +62,7 @@ export function ModalEntradaPorta({ open, onClose }: Props) {
             <Input name="nomeCliente" placeholder="Nome" className="h-12 text-base" />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             <div className="space-y-1.5">
               <Label>Adultos *</Label>
               <Input
@@ -92,6 +94,17 @@ export function ModalEntradaPorta({ open, onClose }: Props) {
                 min={0}
                 value={criancasIsento}
                 onChange={(e) => setCriancasIsento(Number(e.target.value))}
+                className="h-12 text-base"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>10+ anos</Label>
+              <Input
+                name="criancasIntegral"
+                type="number"
+                min={0}
+                value={criancasIntegral}
+                onChange={(e) => setCriancasIntegral(Number(e.target.value))}
                 className="h-12 text-base"
               />
             </div>

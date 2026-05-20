@@ -76,6 +76,7 @@ export function TabelaReservasHoje({ reservas }: { reservas: Reserva[] }) {
                   <td className="px-4 py-3 text-gray-600">{r.horarioReservado ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-600">
                     {r.adultos}A
+                    {r.criancasIntegral > 0 && ` + ${r.criancasIntegral} Int`}
                     {r.criancas50pct > 0 && ` + ${r.criancas50pct} Meia`}
                     {r.criancasIsento > 0 && ` + ${r.criancasIsento} Cortesia`}
                   </td>

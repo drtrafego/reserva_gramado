@@ -12,8 +12,9 @@ export const entradaPortaSchema = z.object({
   adultos: z.coerce.number().int().min(1, 'Mínimo 1 adulto'),
   criancas50pct: z.coerce.number().int().min(0).default(0),
   criancasIsento: z.coerce.number().int().min(0).default(0),
+  criancasIntegral: z.coerce.number().int().min(0).default(0),
   valorPorPessoa: z.coerce.number().min(0).optional(),
-  mesasUnificadas: z.coerce.boolean().optional().default(false),
+  mesasUnificadas: z.preprocess((v) => v === true || v === 'true' || v === 'on' || v === '1', z.boolean()).optional().default(false),
   observacoes: z.string().max(500).optional(),
 })
 
@@ -25,9 +26,10 @@ export const novaReservaSchema = z.object({
   adultos: z.coerce.number().int().min(1, 'Mínimo 1 adulto'),
   criancas50pct: z.coerce.number().int().min(0).default(0),
   criancasIsento: z.coerce.number().int().min(0).default(0),
+  criancasIntegral: z.coerce.number().int().min(0).default(0),
   valorPorPessoa: z.coerce.number().min(0),
   canalOrigem: z.enum(['reserva', 'porta', 'site', 'whatsapp']),
-  mesasUnificadas: z.coerce.boolean().optional().default(false),
+  mesasUnificadas: z.preprocess((v) => v === true || v === 'true' || v === 'on' || v === '1', z.boolean()).optional().default(false),
   observacoes: z.string().max(500).optional(),
 })
 
@@ -39,8 +41,9 @@ export const editarReservaSchema = z.object({
   adultos: z.coerce.number().int().min(1, 'Mínimo 1 adulto'),
   criancas50pct: z.coerce.number().int().min(0).default(0),
   criancasIsento: z.coerce.number().int().min(0).default(0),
+  criancasIntegral: z.coerce.number().int().min(0).default(0),
   valorPorPessoa: z.coerce.number().min(0).optional(),
-  mesasUnificadas: z.coerce.boolean().optional().default(false),
+  mesasUnificadas: z.preprocess((v) => v === true || v === 'true' || v === 'on' || v === '1', z.boolean()).optional().default(false),
   observacoes: z.string().max(500).optional(),
 })
 

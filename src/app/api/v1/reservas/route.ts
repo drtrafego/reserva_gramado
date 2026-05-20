@@ -15,13 +15,14 @@ const criarReservaSchema = z.object({
   adultos: z.number().int().min(1),
   criancasMeia: z.number().int().min(0).default(0),
   criancasIsento: z.number().int().min(0).default(0),
+  criancasIntegral: z.number().int().min(0).default(0),
   valorPorPessoa: z.number().min(0),
   mesasUnificadas: z.boolean().optional().default(false),
   observacoes: z.string().max(500).optional(),
 })
 
-function calcularTotal(adultos: number, criancasMeia: number, valorPorPessoa: number) {
-  return adultos * valorPorPessoa + criancasMeia * VALOR_CRIANCA_MEIA
+function calcularTotal(adultos: number, criancasMeia: number, criancasIntegral: number, valorPorPessoa: number) {
+  return (adultos + criancasIntegral) * valorPorPessoa + criancasMeia * VALOR_CRIANCA_MEIA
 }
 
 export async function GET(req: NextRequest) {
@@ -69,26 +70,26 @@ export async function POST(req: NextRequest) {
 
   const {
     data, nomeCliente, telefone, horarioReservado,
-    adultos, criancasMeia, criancasIsento, valorPorPessoa, mesasUnificadas, observacoes,
+    adultos, criancasMeia, criancasIsento, criancasIntegral, valorPorPessoa, mesasUnificadas, observacoes,
   } = parsed.data
 
-  const totalNovos = adultos + criancasMeia + criancasIsento
-  const total = calcularTotal(adultos, criancasMeia, valorPorPessoa)
+  const totalNovos = adultos + criancasMeia + criancasIsento + criancasIntegral
+  const total = calcularTotal(adultos, criancasMeia, criancasIntegral, valorPorPessoa)
 
   const result = await db.execute(sql`
     INSERT INTO reservas (
       data, nome_cliente, telefone, horario_reservado,
-      adultos, criancas_50pct, criancas_isento,
+      adultos, criancas_50pct, criancas_isento, criancas_integral,
       valor_por_pessoa, valor_total,
       canal_origem, status, mesas_unificadas, observacoes
     )
     SELECT
       ${data}, ${nomeCliente}, ${telefone ?? null}, ${horarioReservado},
-      ${adultos}, ${criancasMeia}, ${criancasIsento},
+      ${adultos}, ${criancasMeia}, ${criancasIsento}, ${criancasIntegral},
       ${String(valorPorPessoa)}, ${String(total)},
       'whatsapp', 'pendente', ${mesasUnificadas ?? false}, ${observacoes ?? null}
     WHERE (
-      SELECT COALESCE(SUM(adultos + criancas_50pct + criancas_isento), 0)
+      SELECT COALESCE(SUM(adultos + criancas_50pct + criancas_isento + criancas_integral), 0)
       FROM reservas
       WHERE data = ${data} AND status = 'pendente'
     ) + ${totalNovos} <= (
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
     // Verificar quantas vagas restam para dar resposta útil ao bot
     const [config] = await db.select().from(restauranteConfig).limit(1)
     const [{ ocupado }] = await db
-      .select({ ocupado: sql<string>`coalesce(sum(adultos + criancas_50pct + criancas_isento), 0)` })
+      .select({ ocupado: sql<string>`coalesce(sum(adultos + criancas_50pct + criancas_isento + criancas_integral), 0)` })
       .from(reservas)
       .where(and(eq(reservas.data, data), eq(reservas.status, 'pendente')))
 
@@ -126,6 +127,7 @@ export async function POST(req: NextRequest) {
     adultos: row.adultos,
     criancas50pct: row.criancas_50pct,
     criancasIsento: row.criancas_isento,
+    criancasIntegral: row.criancas_integral,
     pessoasChegada: row.pessoas_chegada,
     valorPorPessoa: row.valor_por_pessoa,
     valorTotal: row.valor_total,

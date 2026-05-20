@@ -78,7 +78,7 @@ export function ModalEditarReserva({ reserva, open, onClose }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="edit-adultos">Adultos</Label>
               <Input
@@ -88,6 +88,16 @@ export function ModalEditarReserva({ reserva, open, onClose }: Props) {
                 min={1}
                 defaultValue={reserva.adultos}
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-cint">Integral (10+ anos)</Label>
+              <Input
+                id="edit-cint"
+                name="criancasIntegral"
+                type="number"
+                min={0}
+                defaultValue={reserva.criancasIntegral}
               />
             </div>
             <div className="space-y-2">

@@ -11,7 +11,7 @@ import { criarReserva } from '@/lib/actions/reservas'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
-const VALORES_PADRAO = ['49.90', '69.90', '79.90', '89.90', '99.90']
+const VALORES_PADRAO = ['59.90', '69.90', '79.90', '99.90']
 
 export function FormNovaReserva() {
   const [pending, startTransition] = useTransition()
@@ -20,11 +20,12 @@ export function FormNovaReserva() {
   const [adultos, setAdultos] = useState(2)
   const [criancas50, setCriancas50] = useState(0)
   const [criancasIsento, setCriancasIsento] = useState(0)
-  const [valorPorPessoa, setValorPorPessoa] = useState('69.90')
+  const [criancasIntegral, setCriancasIntegral] = useState(0)
+  const [valorPorPessoa, setValorPorPessoa] = useState('59.90')
   const [canal, setCanal] = useState('reserva')
 
   const VALOR_MEIA = 39.95
-  const total = adultos * Number(valorPorPessoa) + criancas50 * VALOR_MEIA
+  const total = (adultos + criancasIntegral) * Number(valorPorPessoa) + criancas50 * VALOR_MEIA
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -154,6 +155,18 @@ export function FormNovaReserva() {
             min={0}
             value={criancasIsento}
             onChange={(e) => setCriancasIsento(Number(e.target.value))}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="criancasIntegral">Integral (10+ anos)</Label>
+          <Input
+            id="criancasIntegral"
+            name="criancasIntegral"
+            type="number"
+            min={0}
+            value={criancasIntegral}
+            onChange={(e) => setCriancasIntegral(Number(e.target.value))}
           />
         </div>
 

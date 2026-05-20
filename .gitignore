@@ -50,3 +50,5 @@ next-env.d.ts
 *.ogg
 *.mp4
 *.mp3
+
+.vercel

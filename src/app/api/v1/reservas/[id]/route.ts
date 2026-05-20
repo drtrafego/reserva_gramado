@@ -14,14 +14,15 @@ const atualizarReservaSchema = z.object({
   adultos: z.number().int().min(1).optional(),
   criancasMeia: z.number().int().min(0).optional(),
   criancasIsento: z.number().int().min(0).optional(),
+  criancasIntegral: z.number().int().min(0).optional(),
   valorPorPessoa: z.number().min(0).optional(),
   mesasUnificadas: z.boolean().optional(),
   observacoes: z.string().max(500).optional(),
   status: z.enum(['pendente', 'cancelou']).optional(),
 })
 
-function calcularTotal(adultos: number, criancasMeia: number, valorPorPessoa: number) {
-  return adultos * valorPorPessoa + criancasMeia * VALOR_CRIANCA_MEIA
+function calcularTotal(adultos: number, criancasMeia: number, criancasIntegral: number, valorPorPessoa: number) {
+  return (adultos + criancasIntegral) * valorPorPessoa + criancasMeia * VALOR_CRIANCA_MEIA
 }
 
 async function buscarReserva(id: string) {
@@ -69,10 +70,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const d = parsed.data
   const adultos = d.adultos ?? reservaAtual.adultos
   const criancasMeia = d.criancasMeia ?? reservaAtual.criancas50pct
+  const criancasIntegral = d.criancasIntegral ?? reservaAtual.criancasIntegral
   const valorPorPessoa = d.valorPorPessoa ?? Number(reservaAtual.valorPorPessoa ?? 0)
 
   const valorTotal = valorPorPessoa > 0
-    ? String(calcularTotal(adultos, criancasMeia, valorPorPessoa))
+    ? String(calcularTotal(adultos, criancasMeia, criancasIntegral, valorPorPessoa))
     : reservaAtual.valorTotal
 
   const [atualizada] = await db
@@ -84,6 +86,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(d.adultos !== undefined && { adultos: d.adultos }),
       ...(d.criancasMeia !== undefined && { criancas50pct: d.criancasMeia }),
       ...(d.criancasIsento !== undefined && { criancasIsento: d.criancasIsento }),
+      ...(d.criancasIntegral !== undefined && { criancasIntegral: d.criancasIntegral }),
       ...(d.valorPorPessoa !== undefined && { valorPorPessoa: String(d.valorPorPessoa) }),
       ...(d.mesasUnificadas !== undefined && { mesasUnificadas: d.mesasUnificadas }),
       ...(d.observacoes !== undefined && { observacoes: d.observacoes }),

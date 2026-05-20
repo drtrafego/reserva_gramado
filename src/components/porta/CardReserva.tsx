@@ -85,7 +85,7 @@ export function CardReserva({
   const isPendente = reserva.status === 'pendente'
   const chegou = reserva.status === 'compareceu'
   const naoVeio = reserva.status === 'nao_compareceu'
-  const totalPessoas = reserva.adultos + reserva.criancas50pct + reserva.criancasIsento
+  const totalPessoas = reserva.adultos + reserva.criancas50pct + reserva.criancasIsento + reserva.criancasIntegral
   const duracao = reserva.mesasUnificadas ? tempoPermanenciaUnificadaMin : tempoPermanenciaMin
 
   function handleNaoCompareceu() {
