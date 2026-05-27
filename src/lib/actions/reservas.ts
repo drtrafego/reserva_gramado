@@ -10,7 +10,7 @@ import {
   novaReservaSchema,
   editarReservaSchema,
 } from '@/lib/validations/reserva'
-import { format } from 'date-fns'
+import { dataHojeBR, horaAgoraBR } from '@/lib/tz'
 
 const VALOR_CRIANCA_MEIA = 39.95
 
@@ -22,7 +22,7 @@ export async function confirmarChegada(formData: FormData) {
   const raw = {
     id: formData.get('id'),
     pessoasChegada: formData.get('pessoasChegada'),
-    horarioChegada: formData.get('horarioChegada') || format(new Date(), 'HH:mm'),
+    horarioChegada: formData.get('horarioChegada') || horaAgoraBR(),
     observacoes: formData.get('observacoes'),
   }
 
@@ -34,7 +34,7 @@ export async function confirmarChegada(formData: FormData) {
     .set({
       status: 'compareceu',
       pessoasChegada: parsed.data.pessoasChegada,
-      horarioChegada: parsed.data.horarioChegada ?? format(new Date(), 'HH:mm'),
+      horarioChegada: parsed.data.horarioChegada ?? horaAgoraBR(),
       observacoes: parsed.data.observacoes ?? null,
       updatedAt: new Date(),
     })
@@ -73,17 +73,16 @@ export async function registrarEntradaPorta(formData: FormData) {
 
   const { adultos, criancas50pct, criancasIsento, criancasIntegral, valorPorPessoa, mesasUnificadas } = parsed.data
   const total = valorPorPessoa ? calcularTotal(adultos, criancas50pct, criancasIntegral, valorPorPessoa) : null
-  const agora = new Date()
 
   await db.insert(reservas).values({
-    data: format(agora, 'yyyy-MM-dd'),
+    data: dataHojeBR(),
     nomeCliente: parsed.data.nomeCliente || null,
     adultos,
     criancas50pct,
     criancasIsento,
     criancasIntegral,
     pessoasChegada: adultos + criancas50pct + criancasIsento + criancasIntegral,
-    horarioChegada: format(agora, 'HH:mm'),
+    horarioChegada: horaAgoraBR(),
     valorPorPessoa: valorPorPessoa ? String(valorPorPessoa) : null,
     valorTotal: total ? String(total) : null,
     canalOrigem: 'porta',

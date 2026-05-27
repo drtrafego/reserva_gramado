@@ -116,6 +116,7 @@ export async function getSlotsDisponiveis(data: string, pessoas: number) {
   const inicioMin = inicioH * 60 + inicioM
   const fimMin = fimH * 60 + fimM
   const duracao = config.tempoPermanenciaMin
+  const duracaoMaxima = Math.max(config.tempoPermanenciaMin, config.tempoPermanenciaUnificadaMin)
   const intervalo = config.intervaloSlotMin
 
   function minToHH(min: number) {
@@ -125,7 +126,7 @@ export async function getSlotsDisponiveis(data: string, pessoas: number) {
   }
 
   const slots = []
-  for (let t = inicioMin; t + duracao <= fimMin; t += intervalo) {
+  for (let t = inicioMin; t + duracaoMaxima <= fimMin; t += intervalo) {
     const horario = minToHH(t)
 
     const ocupadosNoSlot = reservasDoDia.reduce((s, r) => {

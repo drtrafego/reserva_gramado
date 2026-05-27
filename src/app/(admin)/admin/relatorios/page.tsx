@@ -1,5 +1,6 @@
 import { getRelatorioMensal } from '@/lib/db/queries'
 import { RelatorioMensal } from '@/components/admin/RelatorioMensal'
+import { nowPartsBR } from '@/lib/tz'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,9 +10,9 @@ interface Props {
 
 export default async function RelatoriosPage({ searchParams }: Props) {
   const params = await searchParams
-  const agora = new Date()
-  const mes = Number(params.mes ?? agora.getMonth() + 1)
-  const ano = Number(params.ano ?? agora.getFullYear())
+  const { ano: anoBR, mes: mesBR } = nowPartsBR()
+  const mes = Number(params.mes ?? mesBR)
+  const ano = Number(params.ano ?? anoBR)
 
   const relatorio = await getRelatorioMensal(ano, mes)
 

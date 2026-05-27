@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { reservas, restauranteConfig } from '@/lib/db/schema'
-import { format } from 'date-fns'
+import { dataHojeBR } from '@/lib/tz'
 
 function calc(adultos: number, criancas50: number, valor: number) {
   return String(adultos * valor + criancas50 * valor * 0.5)
@@ -14,7 +14,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Não disponível em produção' }, { status: 403 })
   }
 
-  const hoje = format(new Date(), 'yyyy-MM-dd')
+  const hoje = dataHojeBR()
 
   const configs = await db.select().from(restauranteConfig).limit(1)
   if (configs.length === 0) {

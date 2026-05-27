@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
     valorTotal: row.valor_total,
     canalOrigem: row.canal_origem,
     status: row.status,
+    mesasUnificadas: row.mesas_unificadas,
     observacoes: row.observacoes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

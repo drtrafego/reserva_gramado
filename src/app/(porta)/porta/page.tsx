@@ -2,6 +2,7 @@ import { format, parseISO, isValid } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getReservasDoDia, getConfig, getCapacidadeOcupada } from '@/lib/db/queries'
 import { PainelPorta } from '@/components/porta/PainelPorta'
+import { dataHojeBR } from '@/lib/tz'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,7 @@ interface Props {
 
 export default async function PortaPage({ searchParams }: Props) {
   const params = await searchParams
-  const hoje = format(new Date(), 'yyyy-MM-dd')
+  const hoje = dataHojeBR()
 
   const dataParam = params.data ?? hoje
   const dataValida = (() => {

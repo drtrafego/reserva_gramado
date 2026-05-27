@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { criarReserva } from '@/lib/actions/reservas'
 import { toast } from 'sonner'
-import { format } from 'date-fns'
+import { dataHojeBR } from '@/lib/tz'
 
 const VALORES_PADRAO = ['59.90', '69.90', '79.90', '99.90']
 
@@ -78,7 +78,7 @@ export function FormNovaReserva() {
             id="data"
             name="data"
             type="date"
-            defaultValue={format(new Date(), 'yyyy-MM-dd')}
+            defaultValue={dataHojeBR()}
             required
           />
         </div>

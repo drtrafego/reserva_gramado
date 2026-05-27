@@ -1,5 +1,6 @@
-import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { formatInTimeZone } from 'date-fns-tz'
+import { TZ_BRASIL, dataHojeBR } from '@/lib/tz'
 import { getResumoDoDia, getReservasDoDia } from '@/lib/db/queries'
 import { TabelaReservasHoje } from '@/components/admin/TabelaReservasHoje'
 import { TrendingUp, TrendingDown, AlertCircle, Users, CheckCircle, XCircle, Clock, MessageCircle, DoorOpen, Globe } from 'lucide-react'
@@ -12,8 +13,8 @@ function fmtBRL(v: number) {
 }
 
 export default async function AdminPage() {
-  const hoje = format(new Date(), 'yyyy-MM-dd')
-  const dataExibida = format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+  const hoje = dataHojeBR()
+  const dataExibida = formatInTimeZone(new Date(), TZ_BRASIL, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })
 
   const [resumo, reservasHoje] = await Promise.all([
     getResumoDoDia(hoje),
