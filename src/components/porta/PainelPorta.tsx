@@ -25,6 +25,7 @@ interface Props {
   isHoje: boolean
   tempoPermanenciaMin?: number
   tempoPermanenciaUnificadaMin?: number
+  limitePessoasGrupoGrande?: number
 }
 
 const FILTROS: { valor: FiltroStatus; label: string; icone: React.ElementType; cor: string }[] = [
@@ -50,6 +51,7 @@ export function PainelPorta({
   isHoje,
   tempoPermanenciaMin = 90,
   tempoPermanenciaUnificadaMin = 120,
+  limitePessoasGrupoGrande = 5,
 }: Props) {
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
@@ -204,6 +206,7 @@ export function PainelPorta({
               onEditar={setReservaEditando}
               tempoPermanenciaMin={tempoPermanenciaMin}
               tempoPermanenciaUnificadaMin={tempoPermanenciaUnificadaMin}
+              limitePessoasGrupoGrande={limitePessoasGrupoGrande}
             />
           ))
         )}

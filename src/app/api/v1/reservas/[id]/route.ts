@@ -3,7 +3,8 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { validarApiKey, respostaErro } from '@/lib/api/auth'
 import { db } from '@/lib/db'
-import { reservas } from '@/lib/db/schema'
+import { reservas, restauranteConfig } from '@/lib/db/schema'
+import { calcularDuracaoMin, totalPessoas } from '@/lib/permanencia'
 
 const VALOR_CRIANCA_MEIA = 39.95
 
@@ -39,7 +40,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const reserva = await buscarReserva(id)
   if (!reserva) return respostaErro('Reserva não encontrada', 404)
 
-  return Response.json({ reserva })
+  const [config] = await db.select().from(restauranteConfig).limit(1)
+  const respostaReserva = config
+    ? { ...reserva, tempoPermanenciaMin: calcularDuracaoMin(totalPessoas(reserva), config) }
+    : reserva
+
+  return Response.json({ reserva: respostaReserva })
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -97,7 +103,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .where(eq(reservas.id, id))
     .returning()
 
-  return Response.json({ reserva: atualizada })
+  const [config] = await db.select().from(restauranteConfig).limit(1)
+  const respostaReserva = config
+    ? { ...atualizada, tempoPermanenciaMin: calcularDuracaoMin(totalPessoas(atualizada), config) }
+    : atualizada
+
+  return Response.json({ reserva: respostaReserva })
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

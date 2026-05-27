@@ -27,6 +27,7 @@ export const restauranteConfig = pgTable('restaurante_config', {
   capacidadeEfetiva: integer('capacidade_efetiva').notNull().default(130),
   tempoPermanenciaMin: integer('tempo_permanencia_min').notNull().default(90),
   tempoPermanenciaUnificadaMin: integer('tempo_permanencia_unificada_min').notNull().default(120),
+  limitePessoasGrupoGrande: integer('limite_pessoas_grupo_grande').notNull().default(5),
   alertaCapacidadePct: integer('alerta_capacidade_pct').notNull().default(85),
   horarioInicio: varchar('horario_inicio', { length: 5 }).notNull().default('18:00'),
   horarioFim: varchar('horario_fim', { length: 5 }).notNull().default('22:00'),
@@ -90,3 +91,4 @@ export type CanalOrigem = (typeof canalOrigemEnum.enumValues)[number]
 export type StatusReserva = (typeof statusReservaEnum.enumValues)[number]
 export type Ambiente = typeof ambientes.$inferSelect
 export type TipoMesa = typeof tiposMesa.$inferSelect
+export type RestauranteConfig = typeof restauranteConfig.$inferSelect

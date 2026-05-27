@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { validarApiKey, respostaErro } from '@/lib/api/auth'
 import { db } from '@/lib/db'
 import { reservas, restauranteConfig } from '@/lib/db/schema'
+import { calcularDuracaoMin, totalPessoas } from '@/lib/permanencia'
 
 const VALOR_CRIANCA_MEIA = 39.95
 
@@ -47,7 +48,12 @@ export async function GET(req: NextRequest) {
     .orderBy(reservas.data, reservas.horarioReservado)
     .limit(50)
 
-  return Response.json({ reservas: resultado })
+  const [config] = await db.select().from(restauranteConfig).limit(1)
+  const reservasComTempo = config
+    ? resultado.map((r) => ({ ...r, tempoPermanenciaMin: calcularDuracaoMin(totalPessoas(r), config) }))
+    : resultado
+
+  return Response.json({ reservas: reservasComTempo })
 }
 
 export async function POST(req: NextRequest) {
@@ -124,11 +130,11 @@ export async function POST(req: NextRequest) {
     telefone: row.telefone,
     horarioReservado: row.horario_reservado,
     horarioChegada: row.horario_chegada,
-    adultos: row.adultos,
-    criancas50pct: row.criancas_50pct,
-    criancasIsento: row.criancas_isento,
-    criancasIntegral: row.criancas_integral,
-    pessoasChegada: row.pessoas_chegada,
+    adultos: row.adultos as number,
+    criancas50pct: row.criancas_50pct as number,
+    criancasIsento: row.criancas_isento as number,
+    criancasIntegral: row.criancas_integral as number,
+    pessoasChegada: (row.pessoas_chegada as number | null) ?? null,
     valorPorPessoa: row.valor_por_pessoa,
     valorTotal: row.valor_total,
     canalOrigem: row.canal_origem,
@@ -139,5 +145,10 @@ export async function POST(req: NextRequest) {
     updatedAt: row.updated_at,
   }
 
-  return Response.json({ reserva: novaReserva }, { status: 201 })
+  const [config] = await db.select().from(restauranteConfig).limit(1)
+  const respostaReserva = config
+    ? { ...novaReserva, tempoPermanenciaMin: calcularDuracaoMin(totalPessoas(novaReserva), config) }
+    : novaReserva
+
+  return Response.json({ reserva: respostaReserva }, { status: 201 })
 }

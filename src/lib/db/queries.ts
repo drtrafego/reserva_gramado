@@ -2,6 +2,7 @@ import { eq, and, sql, gte, lte, desc } from 'drizzle-orm'
 import { db } from './index'
 import { reservas, restauranteConfig, ambientes, tiposMesa } from './schema'
 import type { StatusReserva } from './schema'
+import { calcularDuracaoMin } from '@/lib/permanencia'
 
 export async function getReservasDoDia(data: string) {
   return db
@@ -100,7 +101,6 @@ export async function getSlotsDisponiveis(data: string, pessoas: number) {
       criancas50pct: reservas.criancas50pct,
       criancasIsento: reservas.criancasIsento,
       criancasIntegral: reservas.criancasIntegral,
-      mesasUnificadas: reservas.mesasUnificadas,
       status: reservas.status,
     })
     .from(reservas)
@@ -133,9 +133,10 @@ export async function getSlotsDisponiveis(data: string, pessoas: number) {
       if (!r.horarioReservado) return s
       const [rH, rM] = r.horarioReservado.split(':').map(Number)
       const rMin = rH * 60 + rM
-      const rDur = r.mesasUnificadas ? config.tempoPermanenciaUnificadaMin : duracao
+      const rPessoas = r.adultos + r.criancas50pct + r.criancasIsento + r.criancasIntegral
+      const rDur = calcularDuracaoMin(rPessoas, config)
       if (rMin < t + duracao && t < rMin + rDur) {
-        return s + r.adultos + r.criancas50pct + r.criancasIsento + r.criancasIntegral
+        return s + rPessoas
       }
       return s
     }, 0)

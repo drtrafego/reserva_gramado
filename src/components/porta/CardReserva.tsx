@@ -14,6 +14,7 @@ interface Props {
   onEditar: (reserva: Reserva) => void
   tempoPermanenciaMin?: number
   tempoPermanenciaUnificadaMin?: number
+  limitePessoasGrupoGrande?: number
 }
 
 function fmtBRL(v: string | null | undefined) {
@@ -80,13 +81,15 @@ export function CardReserva({
   onEditar,
   tempoPermanenciaMin = 90,
   tempoPermanenciaUnificadaMin = 120,
+  limitePessoasGrupoGrande = 5,
 }: Props) {
   const [pending, startTransition] = useTransition()
   const isPendente = reserva.status === 'pendente'
   const chegou = reserva.status === 'compareceu'
   const naoVeio = reserva.status === 'nao_compareceu'
   const totalPessoas = reserva.adultos + reserva.criancas50pct + reserva.criancasIsento + reserva.criancasIntegral
-  const duracao = reserva.mesasUnificadas ? tempoPermanenciaUnificadaMin : tempoPermanenciaMin
+  const pessoas = reserva.pessoasChegada ?? totalPessoas
+  const duracao = pessoas >= limitePessoasGrupoGrande ? tempoPermanenciaUnificadaMin : tempoPermanenciaMin
 
   function handleNaoCompareceu() {
     startTransition(async () => {

@@ -38,6 +38,7 @@ export default async function PortaPage({ searchParams }: Props) {
   const alertaPct = config?.alertaCapacidadePct ?? 85
   const tempoPermanenciaMin = config?.tempoPermanenciaMin ?? 90
   const tempoPermanenciaUnificadaMin = config?.tempoPermanenciaUnificadaMin ?? 120
+  const limitePessoasGrupoGrande = config?.limitePessoasGrupoGrande ?? 5
 
   return (
     <PainelPorta
@@ -50,6 +51,7 @@ export default async function PortaPage({ searchParams }: Props) {
       isHoje={isHoje}
       tempoPermanenciaMin={tempoPermanenciaMin}
       tempoPermanenciaUnificadaMin={tempoPermanenciaUnificadaMin}
+      limitePessoasGrupoGrande={limitePessoasGrupoGrande}
     />
   )
 }
